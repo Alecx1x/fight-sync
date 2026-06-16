@@ -1,0 +1,55 @@
+
+# ===== gh-publish hardening (auto-added) =====
+# Secrets
+.env
+.env.*
+!.env.example
+*.local
+.dev.vars
+.dev.vars.*
+*secret*.txt
+bridge-secret.txt
+fightsync-secret.txt
+*.pem
+*.key
+*.pfx
+*.p12
+id_rsa*
+*credential*
+.wrangler/
+# Dependencies / virtualenvs
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+# Build output
+.next/
+dist/
+build/
+out/
+.cache/
+.turbo/
+# Binaries / large local tooling
+cloudflared.exe
+*.exe
+# Media / recordings / scratch (fight-sync etc.)
+recordings/
+_test/
+uploads/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.bin
+*.pt
+*.onnx
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+# ===== end gh-publish hardening =====
+

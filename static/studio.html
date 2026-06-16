@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>FightSync · Form Studio</title>
+<style>
+  :root{--bg:#0b0e13;--panel:#141a23;--panel2:#1b2330;--line:#26303f;--ink:#e7ecf3;
+    --muted:#8b97a8;--accent:#e23b3b;--green:#3ddc84;--yellow:#f7c948;--r:12px;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+  header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+  header .logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+    background:linear-gradient(145deg,var(--accent),#8c1f1f)}
+  header h1{font-size:16px;margin:0;flex:1}
+  header a{color:var(--muted);text-decoration:none;font-size:13px}
+  .wrap{display:grid;grid-template-columns:1fr 320px;gap:16px;padding:16px;max-width:1280px;margin:0 auto}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  .loadbar{display:flex;gap:8px;margin-bottom:12px}
+  .loadbar input{flex:1;background:#0d131b;border:1px solid var(--line);color:var(--ink);
+    border-radius:9px;padding:9px 11px}
+  button{cursor:pointer;border:0;border-radius:9px;font-weight:600}
+  .btn{background:#22303f;border:1px solid var(--line);color:var(--ink);padding:9px 14px}
+  .btn:hover{background:#2a3a4d}
+  .stage{position:relative;background:#000;border-radius:var(--r);overflow:hidden;line-height:0}
+  .stage video{width:100%;display:block}
+  .stage canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+  .transport{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .transport input[type=range]{flex:1;accent-color:var(--accent)}
+  .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:96px}
+  .side{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 10px}
+  .tools{display:flex;flex-wrap:wrap;gap:6px}
+  .tools button{background:#0d131b;border:1px solid var(--line);color:var(--muted);padding:7px 10px;font-size:12.5px}
+  .tools button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .swatches{display:flex;gap:6px;margin-top:10px}
+  .sw{width:26px;height:26px;border-radius:7px;cursor:pointer;border:2px solid transparent}
+  .sw.on{border-color:#fff}
+  .opts{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .opts input[type=number]{width:54px;background:#0d131b;border:1px solid var(--line);color:var(--ink);
+    border-radius:7px;padding:4px 6px}
+  .mlist{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto}
+  .mrow{display:flex;align-items:center;gap:8px;background:#0d131b;border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-size:12.5px;cursor:pointer}
+  .mrow.sel{border-color:var(--accent)}
+  .mrow .dot{width:10px;height:10px;border-radius:50%}
+  .mrow .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mrow .tm{color:var(--muted);font-variant-numeric:tabular-nums}
+  .mrow button{background:none;color:var(--muted);font-size:15px;padding:0 2px}
+  .selops{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .selops button{font-size:12px;padding:6px 9px;background:#22303f;border:1px solid var(--line);color:var(--ink)}
+  .go{background:linear-gradient(145deg,var(--accent),#b32a2a);color:#fff;padding:12px;width:100%;font-size:15px}
+  .go:disabled{opacity:.5}
+  .prog{height:10px;background:#0d131b;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:10px;display:none}
+  .prog.show{display:block}
+  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--yellow))}
+  .pmsg{font-size:12.5px;color:var(--muted);margin-top:6px;min-height:16px}
+  .hint{font-size:12px;color:var(--muted)}
+  a.dl{display:inline-block;margin-top:10px;background:var(--green);color:#06210f;padding:10px 16px;
+    border-radius:9px;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🥊</div>
+  <h1>Form Studio</h1>
+  <a href="/">← back to FightSync</a>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="loadbar">
+      <input id="pathIn" placeholder="C:\path\to\synced-clip.mp4  (or your exported final.mp4)">
+      <button class="btn" id="loadBtn">Load</button>
+    </div>
+    <div class="stage" id="stage">
+      <video id="vid" preload="auto"></video>
+      <canvas id="ov"></canvas>
+    </div>
+    <div class="transport">
+      <button class="btn" id="playBtn">▶</button>
+      <button class="btn" id="stepB" title="−1 frame">⟨</button>
+      <button class="btn" id="stepF" title="+1 frame">⟩</button>
+      <input type="range" id="seek" min="0" max="1000" value="0">
+      <span class="time" id="tlabel">0:00.0 / 0:00.0</span>
+    </div>
+    <div class="hint" style="margin-top:8px">Pick a tool, then draw on the video. Circle/Zone:
+      drag. Arrow: drag tail→head. Polygon: click points, double-click to close. Text: click.
+      Select a marker to move it or track its motion.</div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <h2>Tools</h2>
+      <div class="tools" id="tools">
+        <button data-tool="select" class="on">Select</button>
+        <button data-tool="circle">● Circle</button>
+        <button data-tool="zone">▭ Zone</button>
+        <button data-tool="poly">⬡ Polygon</button>
+        <button data-tool="arrow">↗ Arrow</button>
+        <button data-tool="text">T Text</button>
+      </div>
+      <div class="swatches" id="swatches">
+        <div class="sw on" data-color="red" style="background:#e23b3b"></div>
+        <div class="sw" data-color="green" style="background:#3ddc84"></div>
+        <div class="sw" data-color="yellow" style="background:#f7c948"></div>
+      </div>
+      <div class="opts">
+        <label><input type="checkbox" id="pulse" checked> pulse</label>
+        <label>length <input type="number" id="dur" value="3" min="0.3" step="0.5">s</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Markers</h2>
+      <div class="mlist" id="mlist"></div>
+      <div class="selops" id="selops" style="display:none">
+        <button id="setIn">Set in = now</button>
+        <button id="setOut">Set out = now</button>
+        <button id="trackBtn">◎ Track motion</button>
+        <button id="untrackBtn">untrack</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Export</h2>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn" id="saveBtn" style="flex:1">Save project</button>
+        <button class="btn" id="loadProjBtn" style="flex:1">Load</button>
+      </div>
+      <button class="go" id="burnBtn">Burn in &amp; export</button>
+      <div class="prog" id="prog"><i id="bar"></i></div>
+      <div class="pmsg" id="pmsg"></div>
+      <div id="dlwrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const COLORS={red:[226,59,59],green:[61,220,132],yellow:[247,201,72],white:[240,244,250]};
+const state={base:"",markers:[],sel:null,tool:"select",color:"red",idc:1};
+const vid=$("vid"), ov=$("ov"), ctx=ov.getContext("2d");
+let draft=null, dragStart=null, poly={active:false,pts:[]}, moving=null, mouse=[0,0];
+
+// ── load ────────────────────────────────────────────────────────────────
+function loadVideo(path){
+  if(!path) return;
+  state.base=path;
+  vid.src="/api/media?path="+encodeURIComponent(path);
+  vid.load();
+}
+$("loadBtn").onclick=()=>loadVideo($("pathIn").value.trim());
+$("pathIn").addEventListener("keydown",e=>{ if(e.key==="Enter") $("loadBtn").click(); });
+{ const q=new URLSearchParams(location.search).get("path");
+  if(q){ $("pathIn").value=q; loadVideo(q); } }
+
+vid.addEventListener("loadedmetadata",()=>{ resize(); draw(); updateTime(); });
+function resize(){ ov.width=ov.clientWidth; ov.height=ov.clientHeight; }
+window.addEventListener("resize",()=>{ resize(); draw(); });
+
+// ── transport ─────────────────────────────────────────────────────────────
+$("playBtn").onclick=()=>{ vid.paused?vid.play():vid.pause(); };
+vid.addEventListener("play",()=>$("playBtn").textContent="❚❚");
+vid.addEventListener("pause",()=>$("playBtn").textContent="▶");
+$("stepF").onclick=()=>{ vid.currentTime=Math.min(vid.duration||0,vid.currentTime+1/30); };
+$("stepB").onclick=()=>{ vid.currentTime=Math.max(0,vid.currentTime-1/30); };
+$("seek").addEventListener("input",()=>{ if(vid.duration) vid.currentTime=$("seek").value/1000*vid.duration; });
+function fmt(s){ s=s||0; const m=Math.floor(s/60); return m+":"+String(Math.floor(s%60)).padStart(2,"0")+"."+Math.floor((s*10)%10); }
+function updateTime(){
+  $("tlabel").textContent=fmt(vid.currentTime)+" / "+fmt(vid.duration);
+  if(vid.duration) $("seek").value=vid.currentTime/vid.duration*1000;
+}
+vid.addEventListener("timeupdate",updateTime);
+
+// ── tools / color ──────────────────────────────────────────────────────────
+$("tools").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  $("tools").querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); state.tool=b.dataset.tool; poly.active=false; poly.pts=[];
+});
+$("swatches").querySelectorAll(".sw").forEach(s=>s.onclick=()=>{
+  $("swatches").querySelectorAll(".sw").forEach(x=>x.classList.remove("on"));
+  s.classList.add("on"); state.color=s.dataset.color;
+  if(state.sel){ state.sel.color=state.color; draw(); renderList(); }
+});
+
+// ── drawing helpers (mirror server renderer) ────────────────────────────────
+function alphaEnv(t,s,e,f=0.25){ if(t<s||t>e) return 0; return Math.max(0,Math.min(1,Math.min((t-s)/f,(e-t)/f,1))); }
+function rgba(c,a){ return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+function interpTrack(tr,t){
+  if(t<=tr[0][0]) return tr[0];
+  if(t>=tr[tr.length-1][0]) return tr[tr.length-1];
+  for(let i=1;i<tr.length;i++){ if(tr[i][0]>=t){ const a=tr[i-1],b=tr[i],
+    f=(t-a[0])/((b[0]-a[0])||1); return [t,a[1]+f*(b[1]-a[1]),a[2]+f*(b[2]-a[2]),a[3]+f*(b[3]-a[3]),a[4]+f*(b[4]-a[4])]; } }
+  return tr[tr.length-1];
+}
+function xform(m,t){ if(!m.track) return [0,0,1]; const c=interpTrack(m.track,t),b=m.track[0];
+  return [c[1]-b[1],c[2]-b[2],b[3]?c[3]/b[3]:1]; }
+function drawMarker(m,t,W,H,isSel){
+  const env=alphaEnv(t,m.start,m.end); if(env<=0 && !isSel) return;
+  const e=Math.max(env, isSel?0.5:0);
+  const col=COLORS[m.color]||COLORS.red;
+  const pulse=m.pulse===false?1:(1+0.07*Math.sin(t*2*Math.PI*1.8));
+  const [ox,oy,sc]=xform(m,t);
+  ctx.lineWidth=4; ctx.strokeStyle=rgba(col,0.9*e); ctx.fillStyle=rgba(col,0.2*e);
+  if(m.type==="circle"){
+    const cx=(m.nx+ox)*W, cy=(m.ny+oy)*H, r=m.nr*H*pulse*sc;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.fill(); ctx.stroke();
+    cap(m,cx,cy+r+5,W,H,e,col);
+  } else if(m.type==="zone"){
+    const cx0=m.nx+m.nw/2, cy0=m.ny+m.nh/2, hw=m.nw/2*sc, hh=m.nh/2*sc;
+    const x=(cx0+ox-hw)*W, y=(cy0+oy-hh)*H, w=2*hw*W, h=2*hh*H;
+    rrect(x,y,w,h,Math.min(w,h)*0.12); ctx.fill(); ctx.stroke();
+    cap(m,(cx0+ox)*W,(cy0+oy+hh)*H+5,W,H,e,col);
+  } else if(m.type==="poly"){
+    ctx.beginPath(); m.points.forEach((p,i)=>{ const X=(p[0]+ox)*W,Y=(p[1]+oy)*H; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if(m.type==="arrow"){
+    const x0=(m.nx+ox)*W,y0=(m.ny+oy)*H,x1=(m.nx2+ox)*W,y1=(m.ny2+oy)*H;
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    const ang=Math.atan2(y1-y0,x1-x0), hd=16;
+    [-1,1].forEach(s=>{ ctx.beginPath(); ctx.moveTo(x1,y1);
+      ctx.lineTo(x1-hd*Math.cos(ang-s*0.5),y1-hd*Math.sin(ang-s*0.5)); ctx.stroke(); });
+  } else if(m.type==="text"){
+    drawText(m.text,(m.nx+ox)*W,(m.ny+oy)*H,(m.size||0.05)*H,COLORS.white,e);
+  }
+}
+function cap(m,x,y,W,H,e,col){ if(m.label) drawText(m.label,x,y,0.038*H,col,e); }
+function drawText(txt,x,y,px,col,e){
+  ctx.font="700 "+Math.round(px)+"px Segoe UI,sans-serif"; ctx.textAlign="center"; ctx.textBaseline="top";
+  ctx.lineWidth=Math.max(2,px*0.12); ctx.strokeStyle=rgba([0,0,0],0.85*e); ctx.strokeText(txt,x,y);
+  ctx.fillStyle=rgba(col,0.96*e); ctx.fillText(txt,x,y);
+}
+function rrect(x,y,w,h,r){ ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r);
+  else ctx.rect(x,y,w,h); }
+function draw(){
+  ctx.clearRect(0,0,ov.width,ov.height); const W=ov.width,H=ov.height,t=vid.currentTime;
+  state.markers.forEach(m=>drawMarker(m,t,W,H,m===state.sel));
+  if(poly.active&&poly.pts.length){ ctx.strokeStyle=rgba(COLORS[state.color],0.9); ctx.lineWidth=3;
+    ctx.beginPath(); poly.pts.forEach((p,i)=>{ const X=p[0]*W,Y=p[1]*H; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
+    ctx.stroke(); }
+  if(draft) draft();
+}
+(function loop(){ draw(); requestAnimationFrame(loop); })();
+
+// ── creation interactions ───────────────────────────────────────────────────
+function nm(e){ const r=ov.getBoundingClientRect(); return [(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]; }
+function newMarker(extra){
+  const dur=parseFloat($("dur").value)||3, st=vid.currentTime;
+  return Object.assign({id:state.idc++,color:state.color,pulse:$("pulse").checked,
+    start:+st.toFixed(2),end:+Math.min(vid.duration||st+dur,st+dur).toFixed(2)},extra);
+}
+function addMarker(m){ state.markers.push(m); select(m); renderList(); }
+
+ov.addEventListener("pointerdown",e=>{
+  if(!vid.src) return; ov.setPointerCapture&&ov.setPointerCapture(e.pointerId); const [x,y]=nm(e);
+  const tool=state.tool;
+  if(tool==="select"){ const hit=hitTest(x,y); select(hit);
+    if(hit){ moving={m:hit,ox:x,oy:y,base:snapshot(hit)}; } renderList(); return; }
+  if(tool==="text"){ const txt=prompt("Text:"); if(txt) addMarker(newMarker({type:"text",nx:x,ny:y,text:txt,size:0.05})); return; }
+  if(tool==="poly"){ poly.active=true; poly.pts.push([x,y]); return; }
+  dragStart=[x,y];
+  if(tool==="circle") draft=()=>{ const r=Math.hypot((mouse[0]-x)*ov.width,(mouse[1]-y)*ov.height);
+    ctx.strokeStyle=rgba(COLORS[state.color],0.9); ctx.lineWidth=4; ctx.beginPath(); ctx.arc(x*ov.width,y*ov.height,r,0,7); ctx.stroke(); };
+  else if(tool==="zone") draft=()=>{ ctx.strokeStyle=rgba(COLORS[state.color],0.9); ctx.lineWidth=4;
+    ctx.strokeRect(x*ov.width,y*ov.height,(mouse[0]-x)*ov.width,(mouse[1]-y)*ov.height); };
+  else if(tool==="arrow") draft=()=>{ ctx.strokeStyle=rgba(COLORS[state.color],0.9); ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(x*ov.width,y*ov.height); ctx.lineTo(mouse[0]*ov.width,mouse[1]*ov.height); ctx.stroke(); };
+});
+ov.addEventListener("pointermove",e=>{ mouse=nm(e);
+  if(moving){ const m=moving.m,dx=mouse[0]-moving.ox,dy=mouse[1]-moving.oy; applyMove(m,moving.base,dx,dy); }
+});
+window.addEventListener("pointerup",e=>{
+  if(moving){ moving=null; renderList(); return; }
+  if(!dragStart||!draft){ draft=null; return; }
+  const [x,y]=dragStart, [mx,my]=mouse; draft=null; dragStart=null; const tool=state.tool;
+  if(tool==="circle"){ const r=Math.hypot(mx-x,my-y); if(r>0.01) addMarker(newMarker({type:"circle",nx:x,ny:y,nr:Math.hypot((mx-x)*ov.width,(my-y)*ov.height)/ov.height})); }
+  else if(tool==="zone"){ const nx=Math.min(x,mx),ny=Math.min(y,my),nw=Math.abs(mx-x),nh=Math.abs(my-y);
+    if(nw>0.01&&nh>0.01) addMarker(newMarker({type:"zone",nx,ny,nw,nh})); }
+  else if(tool==="arrow"){ if(Math.hypot(mx-x,my-y)>0.02) addMarker(newMarker({type:"arrow",nx:x,ny:y,nx2:mx,ny2:my})); }
+});
+ov.addEventListener("dblclick",()=>{ if(poly.active&&poly.pts.length>=3){ addMarker(newMarker({type:"poly",points:poly.pts.slice()})); }
+  poly.active=false; poly.pts=[]; });
+window.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){ poly.active=false; poly.pts=[]; }
+  if((e.key==="Delete"||e.key==="Backspace")&&state.sel&&document.activeElement.tagName!=="INPUT"){ delMarker(state.sel); }
+});
+
+function snapshot(m){ return JSON.parse(JSON.stringify(m)); }
+function applyMove(m,base,dx,dy){
+  if(m.type==="poly"){ m.points=base.points.map(p=>[p[0]+dx,p[1]+dy]); }
+  else if(m.type==="arrow"){ m.nx=base.nx+dx;m.ny=base.ny+dy;m.nx2=base.nx2+dx;m.ny2=base.ny2+dy; }
+  else { m.nx=base.nx+dx; m.ny=base.ny+dy; }
+}
+function hitTest(x,y){
+  for(let i=state.markers.length-1;i>=0;i--){ const m=state.markers[i];
+    let cx,cy; if(m.type==="zone"){cx=m.nx+m.nw/2;cy=m.ny+m.nh/2;}
+    else if(m.type==="poly"){ const xs=m.points.map(p=>p[0]),ys=m.points.map(p=>p[1]); cx=(Math.min(...xs)+Math.max(...xs))/2;cy=(Math.min(...ys)+Math.max(...ys))/2;}
+    else if(m.type==="arrow"){cx=(m.nx+m.nx2)/2;cy=(m.ny+m.ny2)/2;}
+    else {cx=m.nx;cy=m.ny;}
+    if(Math.hypot((x-cx)*ov.width,(y-cy)*ov.height)<60) return m; }
+  return null;
+}
+
+// ── selection / list ────────────────────────────────────────────────────────
+function select(m){ state.sel=m; $("selops").style.display=m?"flex":"none";
+  if(m){ $("swatches").querySelectorAll(".sw").forEach(s=>s.classList.toggle("on",s.dataset.color===m.color)); }
+  renderList(); }
+function renderList(){
+  const L=$("mlist"); L.innerHTML="";
+  state.markers.forEach(m=>{
+    const row=document.createElement("div"); row.className="mrow"+(m===state.sel?" sel":"");
+    const name=m.type+(m.track?" ◎":"");
+    row.innerHTML=`<span class="dot" style="background:${rgba(COLORS[m.color],1)}"></span>`+
+      `<span class="lbl">${name}${m.label?" · "+m.label:m.text?" · "+m.text:""}</span>`+
+      `<span class="tm">${m.start}-${m.end}s</span><button title="delete">×</button>`;
+    row.onclick=ev=>{ if(ev.target.tagName==="BUTTON"){ delMarker(m); } else { select(m); vid.currentTime=m.start; } };
+    L.appendChild(row);
+  });
+}
+function delMarker(m){ state.markers=state.markers.filter(x=>x!==m); if(state.sel===m) select(null); renderList(); }
+$("setIn").onclick=()=>{ if(state.sel){ state.sel.start=+vid.currentTime.toFixed(2); renderList(); } };
+$("setOut").onclick=()=>{ if(state.sel){ state.sel.end=+vid.currentTime.toFixed(2); renderList(); } };
+$("untrackBtn").onclick=()=>{ if(state.sel){ delete state.sel.track; renderList(); draw(); } };
+
+// ── tracking ────────────────────────────────────────────────────────────────
+function bboxOf(m){
+  if(m.type==="zone") return [m.nx,m.ny,m.nw,m.nh];
+  if(m.type==="circle"){ const rx=m.nr*ov.height/ov.width; return [m.nx-rx,m.ny-m.nr,2*rx,2*m.nr]; }
+  if(m.type==="poly"){ const xs=m.points.map(p=>p[0]),ys=m.points.map(p=>p[1]);
+    return [Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)]; }
+  return null;
+}
+$("trackBtn").onclick=async()=>{
+  const m=state.sel; if(!m) return; const bb=bboxOf(m);
+  if(!bb){ alert("Track works on circles, zones, and polygons."); return; }
+  $("trackBtn").textContent="tracking…"; $("trackBtn").disabled=true;
+  const fd=new FormData(); fd.append("path",state.base); fd.append("start",m.start);
+  fd.append("dur",(m.end-m.start)); fd.append("nx",bb[0]); fd.append("ny",bb[1]); fd.append("nw",bb[2]); fd.append("nh",bb[3]);
+  try{ const r=await fetch("/api/studio/track",{method:"POST",body:fd}); const d=await r.json();
+    if(d.track&&d.track.length>1){ m.track=d.track; renderList(); }
+    else alert("Couldn't track that region (try a clearer outline or shorter span)."); }
+  catch(_){ alert("Tracking failed."); }
+  $("trackBtn").textContent="◎ Track motion"; $("trackBtn").disabled=false;
+};
+
+// ── project save/load ───────────────────────────────────────────────────────
+$("saveBtn").onclick=async()=>{ const fd=new FormData(); fd.append("path",state.base);
+  fd.append("annotations",JSON.stringify(clean())); await fetch("/api/studio/project",{method:"POST",body:fd});
+  $("pmsg").textContent="Project saved."; };
+$("loadProjBtn").onclick=async()=>{ const d=await(await fetch("/api/studio/project")).json();
+  if(d.path){ $("pathIn").value=d.path; loadVideo(d.path); }
+  state.markers=(d.annotations||[]).map(m=>Object.assign({id:state.idc++},m)); select(null); renderList(); };
+function clean(){ return state.markers.map(m=>{ const c=Object.assign({},m); delete c.id; return c; }); }
+
+// ── export ──────────────────────────────────────────────────────────────────
+$("burnBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a video first."); return; }
+  if(!state.markers.length){ alert("Add at least one marker."); return; }
+  $("burnBtn").disabled=true; $("prog").classList.add("show"); $("dlwrap").innerHTML=""; $("pmsg").textContent="Starting…";
+  const fd=new FormData(); fd.append("path",state.base); fd.append("annotations",JSON.stringify(clean()));
+  const r=await fetch("/api/studio/render",{method:"POST",body:fd}); const {job_id}=await r.json();
+  const t=setInterval(async()=>{
+    const s=await(await fetch("/api/status/"+job_id)).json();
+    $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+    if(s.status==="done"){ clearInterval(t); $("burnBtn").disabled=false;
+      $("dlwrap").innerHTML=`<a class="dl" href="/api/download/${job_id}" download="annotated.mp4">⬇ Download annotated MP4</a>`; }
+    else if(s.status==="error"){ clearInterval(t); $("burnBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; }
+  },1000);
+};
+
+// test/debug hook (harmless): lets headless tests inspect editor state
+window._fs={get state(){return state}, addMarker, newMarker, draw};
+</script>
+</body>
+</html>

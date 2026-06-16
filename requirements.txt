@@ -1,0 +1,13 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+numpy==1.26.4
+faster-whisper==1.0.3
+requests>=2.31.0
+yt-dlp>=2025.1.1
+pillow>=10.0.0
+opencv-contrib-python>=4.9.0
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+# playwright>=1.40  # dev-only, for the headless UI tests

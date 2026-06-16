@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>FightSync</title>
+<style>
+  :root{
+    --bg:#0b0e13; --panel:#141a23; --panel2:#1b2330; --line:#26303f;
+    --ink:#e7ecf3; --muted:#8b97a8; --accent:#e23b3b; --accent2:#f7c948;
+    --ok:#3ddc84; --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 "Segoe UI",system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#16202c,var(--bg)) fixed;
+    color:var(--ink);min-height:100vh}
+  .wrap{max-width:880px;margin:0 auto;padding:40px 22px 80px}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(145deg,var(--accent),#8c1f1f);
+    box-shadow:0 6px 20px rgba(226,59,59,.35);font-size:22px}
+  h1{font-size:23px;margin:0;letter-spacing:.2px}
+  .sub{color:var(--muted);margin:2px 0 30px;font-size:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+  .drop{background:var(--panel);border:1.5px dashed var(--line);border-radius:var(--r);
+    padding:22px;text-align:center;transition:.15s;cursor:pointer;position:relative}
+  .drop.tag-g{box-shadow:inset 0 2px 0 var(--accent)}
+  .drop.tag-f{box-shadow:inset 0 2px 0 var(--accent2)}
+  .drop:hover{border-color:#3a495d;background:var(--panel2)}
+  .drop.over{border-color:var(--accent);background:#1d2632}
+  .drop .ic{font-size:30px}
+  .drop .lbl{font-weight:600;margin-top:8px}
+  .drop .hint{color:var(--muted);font-size:12.5px;margin-top:4px}
+  .drop .file{color:var(--ok);font-size:13px;margin-top:8px;word-break:break-all;
+    display:none}
+  .drop.has .file{display:block}
+  .drop.has .hint,.drop.has .ic{opacity:.4}
+  .pathline{margin-top:10px}
+  .pathline input{width:100%;background:#0d131b;border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:8px 10px;font-size:12.5px}
+  .pathtoggle{font-size:12px;color:var(--muted);margin-top:8px;cursor:pointer;
+    text-decoration:underline dotted;user-select:none}
+  .metaline{margin-top:10px;display:flex;gap:6px}
+  .metaline input{flex:1;background:#0d131b;border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:8px 10px;font-size:12.5px}
+  .metaline button{background:#22303f;border:1px solid var(--line);color:var(--ink);
+    border-radius:9px;padding:0 14px;cursor:pointer;font-weight:600;font-size:13px}
+  .metastatus{font-size:12px;color:var(--accent2);margin-top:6px;min-height:15px}
+  .items{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:5px;text-align:left}
+  .items li{display:flex;align-items:center;gap:8px;background:#0d131b;border:1px solid var(--line);
+    border-radius:7px;padding:5px 8px;font-size:12px}
+  .items .num{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+  .items .inm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+  .items li button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;flex:none}
+  .syncstat{display:flex;flex-direction:column;gap:7px}
+  .syncrow{display:flex;align-items:center;gap:10px;font-size:13.5px;background:#0d131b;
+    border:1px solid var(--line);border-radius:8px;padding:8px 11px}
+  .syncrow .rname{font-weight:600;flex:none;min-width:64px}
+  .syncrow .rdet{color:var(--muted);flex:1}
+  .syncrow .rmark{font-weight:700}
+  .syncrow.ok .rmark{color:var(--ok)} .syncrow.warn .rmark{color:var(--accent2)}
+  .syncrow.bad .rmark{color:var(--accent)}
+  .syncmsg{font-size:13px;color:var(--muted)}
+  .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+  .pvstage{display:flex;gap:6px;background:#000;border-radius:10px;overflow:hidden}
+  .pvstage video{width:50%;display:block;background:#000;aspect-ratio:16/9;object-fit:contain}
+  .pvbar{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .pvbar input[type=range]{flex:1;accent-color:var(--accent)}
+  .btnplay{background:#22303f;border:1px solid var(--line);color:var(--ink);
+    border-radius:9px;padding:8px 16px;cursor:pointer;font-weight:600}
+  .btnplay:disabled{opacity:.45;cursor:default}
+  .pvnudge{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .pvnudge button{background:#22303f;border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600}
+  .pvnudge button:hover{background:#2c3e52}
+  .pvnudge button.ghost{background:transparent;color:var(--muted)}
+  .pvnudge #pvOffset{min-width:54px;text-align:center}
+  .recctl{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+  .recbtn{background:#2a1416;border:1px solid #5a2327;color:#ff8d8d;
+    padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .recbtn:hover{background:#3a1a1d}
+  .micchk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer}
+  .micchk input{width:15px;height:15px;accent-color:var(--accent)}
+  .recbar{display:none;align-items:center;justify-content:center;gap:12px;margin-top:12px;
+    padding:9px;background:#1a0f12;border:1px solid #5a2327;border-radius:10px}
+  .recbar.show{display:flex}
+  .recdot{color:var(--accent);font-size:14px;animation:blink 1s steps(2,start) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .rectime{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--ink)}
+  .recstop{background:var(--accent);border:0;color:#fff;padding:6px 14px;border-radius:8px;
+    cursor:pointer;font-weight:600;font-size:13px}
+  .recstatus{font-size:12px;color:var(--muted)}
+  .addchan{display:flex;gap:8px}
+  .addchan input{flex:1}
+  .addchan button{background:#22303f;border:1px solid var(--line);color:var(--ink);
+    padding:0 16px;border-radius:9px;cursor:pointer;font-weight:600}
+  .chanlist{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  .chan{display:flex;align-items:center;gap:12px;background:#0d131b;border:1px solid var(--line);
+    border-radius:10px;padding:11px 14px}
+  .chan .nm{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+  .badge.live{background:var(--accent);color:#fff;animation:blink 1.4s steps(2,start) infinite}
+  .badge.off{background:#222c38;color:var(--muted)}
+  .badge.chk{background:#2a2410;color:var(--accent2)}
+  .capbtn{background:var(--accent);border:0;color:#fff;padding:8px 14px;border-radius:9px;
+    cursor:pointer;font-weight:600;font-size:13px}
+  .capbtn:disabled{background:#2a2c30;color:#6b7686;cursor:not-allowed}
+  .capbtn.recording{background:#7a1f1f}
+  .chanrec{font-size:12px;color:var(--accent2);font-variant-numeric:tabular-nums;min-width:42px}
+  .chanx{background:none;border:0;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+  .chanx:hover{color:var(--accent)}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:50;
+    align-items:center;justify-content:center;padding:20px}
+  .modal.show{display:flex}
+  .modalbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:22px;max-width:720px;width:100%}
+  .modalbox h3{margin:0 0 4px}
+  .cropstage{position:relative;display:inline-block;margin:14px 0;line-height:0;
+    max-width:100%;border-radius:8px;overflow:hidden}
+  .cropstage img{max-width:100%;display:block;-webkit-user-drag:none;user-select:none}
+  .cropbox{position:absolute;border:2px solid var(--accent);
+    box-shadow:0 0 0 9999px rgba(0,0,0,.45);cursor:move;box-sizing:border-box}
+  .cropbox .rh{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;
+    background:var(--accent);border:2px solid #fff;border-radius:3px;cursor:nwse-resize}
+  .modalbtns{display:flex;gap:10px;flex-wrap:wrap}
+  .modalbtns button{padding:10px 16px;border-radius:9px;font-weight:600;cursor:pointer;border:0}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:20px 22px;margin-top:18px}
+  section h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;
+    color:var(--muted);margin:0 0 16px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}
+  @media(max-width:680px){.row{grid-template-columns:1fr}}
+  label.f{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type=text],select{width:100%;background:#0d131b;border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:9px 11px;font-size:14px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:64px;background:#0d131b;border:1px solid var(--line);
+    color:var(--muted);padding:8px;border-radius:9px;cursor:pointer;font-size:13px}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;
+    font-weight:600}
+  .chk{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink);
+    padding:7px 0;cursor:pointer}
+  .chk input{width:17px;height:17px;accent-color:var(--accent)}
+  .go{margin-top:24px;width:100%;padding:15px;border:0;border-radius:12px;
+    font-size:16px;font-weight:700;color:#fff;cursor:pointer;
+    background:linear-gradient(145deg,var(--accent),#b32a2a);
+    box-shadow:0 8px 24px rgba(226,59,59,.3)}
+  .go:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .prog{margin-top:22px;display:none}
+  .prog.show{display:block}
+  .bar{height:12px;background:#0d131b;border-radius:8px;overflow:hidden;
+    border:1px solid var(--line)}
+  .bar i{display:block;height:100%;width:0;transition:width .4s;
+    background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .pmsg{margin-top:10px;font-size:13.5px;color:var(--muted);min-height:20px}
+  .pct{float:right;color:var(--ink);font-weight:600}
+  .done{margin-top:18px;padding:18px;border-radius:12px;display:none;
+    background:#11241a;border:1px solid #1f4d33}
+  .done.show{display:block}
+  .done a{display:inline-block;margin:8px 10px 0 0;padding:11px 18px;border-radius:10px;
+    text-decoration:none;font-weight:600;font-size:14px}
+  .dl{background:var(--ok);color:#06210f}
+  .dl2{background:#22303f;color:var(--ink);border:1px solid var(--line)}
+  .ytbox{margin-top:16px;border:1px solid #1f4d33;border-radius:12px;
+    background:#0d1a13;padding:14px 16px}
+  .ytbox h4{margin:0 0 4px;font-size:14px;color:var(--ink)}
+  .ytrow{margin-top:12px}
+  .ytrow .lbl{display:flex;justify-content:space-between;align-items:center;
+    font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;
+    letter-spacing:.04em}
+  .ytrow textarea,.ytrow input.ytf{width:100%;box-sizing:border-box;resize:vertical;
+    background:#0a130d;color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:9px 11px;font:13px/1.5 ui-monospace,Consolas,monospace}
+  .copybtn{background:#22303f;color:var(--ink);border:1px solid var(--line);
+    border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer}
+  .copybtn:hover{background:#2c3e52}
+  .copybtn.ok{background:var(--ok);color:#06210f;border-color:var(--ok)}
+  .err{margin-top:18px;padding:14px 16px;border-radius:10px;display:none;
+    background:#2a1416;border:1px solid #5a2327;color:#ffb4b4;font-size:13.5px;
+    white-space:pre-wrap}
+  .err.show{display:block}
+  video{width:100%;border-radius:10px;margin-top:14px;background:#000}
+  .small{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🥊</div>
+    <div style="flex:1">
+      <h1>FightSync</h1>
+      <div class="small">Auto-sync · composite · subtitle · publish</div>
+    </div>
+    <a href="/studio" style="color:var(--accent2);text-decoration:none;font-weight:600;font-size:14px">Form Studio →</a>
+  </header>
+  <p class="sub">Drop your <b>Thrill of the Fight 2</b> gameplay capture and your
+    facecam. FightSync aligns them by their shared audio, overlays the facecam,
+    transcribes subtitles, and tops &amp; tails it for YouTube.</p>
+
+  <div class="grid2">
+    <div class="drop tag-g" id="dropG" data-name="gameplay">
+      <div class="ic">🎮</div>
+      <div class="lbl">Gameplay footage</div>
+      <div class="hint">Drag videos here, or click to browse — add several (kept in order)</div>
+      <div class="file"></div>
+      <ol class="items" data-items></ol>
+      <div class="metastatus" data-addstatus></div>
+      <div class="recctl">
+        <button class="recbtn" data-rec>● Record screen</button>
+        <label class="micchk"><input type="checkbox" data-mic checked> + mic</label>
+      </div>
+      <div class="recbar" data-recbar>
+        <span class="recdot">●</span><span class="rectime" data-rectime>0:00</span>
+        <button class="recstop" data-recstop>■ Stop</button>
+        <span class="recstatus" data-recstatus></span>
+      </div>
+      <div class="pathtoggle">use a file path instead</div>
+      <div class="pathline" style="display:none">
+        <input type="text" placeholder="C:\path\to\gameplay.mp4" data-path>
+      </div>
+      <div class="pathtoggle" data-metatoggle>📎 paste a Meta Quest clip link</div>
+      <div class="metaline" data-metaline style="display:none">
+        <input type="text" data-metaurl placeholder="Meta clip share link…">
+        <button data-metago>Import</button>
+      </div>
+      <div class="metastatus" data-metastatus></div>
+    </div>
+    <div class="drop tag-f" id="dropF" data-name="facecam">
+      <div class="ic">📷</div>
+      <div class="lbl">Facecam / live cam</div>
+      <div class="hint">Drag videos here, or click to browse — add several (kept in order)</div>
+      <div class="file"></div>
+      <ol class="items" data-items></ol>
+      <div class="metastatus" data-addstatus></div>
+      <div class="recctl">
+        <button class="recbtn" data-rec>● Record webcam</button>
+        <button class="recbtn" data-lib style="background:#16243b;border-color:#2a3a5d;color:#cfe0f5">📱 Upload from library</button>
+      </div>
+      <div class="recbar" data-recbar>
+        <span class="recdot">●</span><span class="rectime" data-rectime>0:00</span>
+        <button class="recstop" data-recstop>■ Stop</button>
+        <span class="recstatus" data-recstatus></span>
+      </div>
+      <div class="metastatus" data-libstatus></div>
+      <div class="pathtoggle">use a file path instead</div>
+      <div class="pathline" style="display:none">
+        <input type="text" placeholder="C:\path\to\facecam.mp4" data-path>
+      </div>
+    </div>
+  </div>
+
+  <section id="syncSection" style="display:none">
+    <h2>Sync 🔄</h2>
+    <div id="syncStatus" class="syncstat"></div>
+  </section>
+
+  <section id="previewSection" style="display:none">
+    <h2>Synced preview 👀</h2>
+    <div class="pvstage">
+      <video id="pvG" muted playsinline preload="auto"></video>
+      <video id="pvF" muted playsinline preload="auto"></video>
+    </div>
+    <div class="pvbar">
+      <button class="btnplay" id="pvPlay">▶</button>
+      <input type="range" id="pvSeek" min="0" max="1000" value="0">
+      <span class="time" id="pvTime">0:00 / 0:00</span>
+      <label class="micchk"><input type="checkbox" id="pvAudio"> audio</label>
+    </div>
+    <div class="pvnudge">
+      <span class="small">Fine-tune sync:</span>
+      <button data-nudge="-1">⏪ −1s</button>
+      <button data-nudge="-0.1">−0.1s</button>
+      <span class="time" id="pvOffset">0.0s</span>
+      <button data-nudge="0.1">+0.1s</button>
+      <button data-nudge="1">+1s ⏩</button>
+      <button id="pvNudgeReset" class="ghost">reset</button>
+    </div>
+    <div class="small" style="margin-top:6px" id="pvNote"></div>
+  </section>
+
+  <section id="channelsSection">
+    <h2>Auto-capture from live channels 🎥</h2>
+    <div class="addchan">
+      <input type="text" id="chanUrl"
+        placeholder="youtube.com/@TheCleanLeague  or  @RingsideVR">
+      <button id="chanAdd">Add channel</button>
+    </div>
+    <div id="chanList" class="chanlist"></div>
+    <div class="small" style="margin-top:10px">
+      When a channel is <b style="color:var(--accent)">LIVE</b>, press <b>Capture</b>
+      to screen-record it; press again to stop. It auto-detects the gameplay view,
+      you confirm the crop once (saved per channel), and it drops into the gameplay
+      slot above. Needs http://127.0.0.1 in Chrome/Edge to record.
+    </div>
+  </section>
+
+  <section>
+    <h2>Composite</h2>
+    <div class="row">
+      <div>
+        <label class="f">Layout</label>
+        <div class="seg" id="layoutSeg">
+          <button data-v="pip" class="on">Picture-in-picture</button>
+          <button data-v="sbs">Side-by-side</button>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px" id="pipOpts">
+      <div>
+        <label class="f">Facecam corner</label>
+        <div class="seg" id="posSeg">
+          <button data-v="tl">Top L</button>
+          <button data-v="tr">Top R</button>
+          <button data-v="bl">Bot L</button>
+          <button data-v="br" class="on">Bot R</button>
+        </div>
+      </div>
+      <div>
+        <label class="f">Facecam size</label>
+        <div class="seg" id="sizeSeg">
+          <button data-v="0.20">Small</button>
+          <button data-v="0.26" class="on">Medium</button>
+          <button data-v="0.34">Large</button>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <div>
+        <label class="f">Audio</label>
+        <div class="seg" id="audioSeg">
+          <button data-v="mix" class="on">Mix both</button>
+          <button data-v="gameplay">Game</button>
+          <button data-v="facecam">Mic</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>YouTube extras</h2>
+    <div class="row">
+      <div>
+        <label class="f">Intro title</label>
+        <input type="text" id="title" value="The Thrill of the Fight 2">
+      </div>
+      <div>
+        <label class="f">Intro subtitle (optional)</label>
+        <input type="text" id="introSub" placeholder="Round 1 · VR Boxing">
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <div>
+        <label class="chk"><input type="checkbox" id="intro" checked> Intro card</label>
+        <label class="chk"><input type="checkbox" id="outro" checked> Outro card</label>
+      </div>
+      <div>
+        <label class="chk"><input type="checkbox" id="subs" checked> Auto subtitles (Whisper)</label>
+        <label class="chk"><input type="checkbox" id="burn" checked> Burn subtitles into video</label>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label class="f">Subtitle accuracy</label>
+      <select id="model" style="max-width:260px">
+        <option value="tiny">Fastest (tiny)</option>
+        <option value="base" selected>Balanced (base)</option>
+        <option value="small">Accurate (small)</option>
+        <option value="medium">Most accurate (medium, slow)</option>
+      </select>
+    </div>
+  </section>
+
+  <section>
+    <h2>Round transitions 🔔</h2>
+    <div class="small" style="margin-bottom:12px">Between multiple clips: fade to black,
+      a title flashes with a boxing-bell ring, then fade into the next synced clip.</div>
+    <div class="row">
+      <div>
+        <label class="chk"><input type="checkbox" id="transitions" checked> Bell transition between clips</label>
+        <label class="chk"><input type="checkbox" id="bell" checked> Play boxing-bell sound</label>
+      </div>
+      <div>
+        <label class="f">Transition title (a number is added)</label>
+        <input type="text" id="transLabel" value="ROUND">
+        <div class="small" style="margin-top:5px">e.g. "ROUND" → ROUND 2, ROUND 3…</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cinematic slow-mo replays 🥊</h2>
+    <label class="chk"><input type="checkbox" id="replays"> Add Fight-Night-style
+      slow-mo replays (whoosh + impact SFX, "REPLAY" badge)</label>
+    <div id="replayOpts" style="display:none;margin-top:14px">
+      <div class="row">
+        <div>
+          <label class="f">Replay at these times (in the synced video)</label>
+          <input type="text" id="replayTimes" placeholder="1:23, 4:05, 7:50">
+          <div class="small" style="margin-top:5px">Comma-separated. Use the time
+            in the synced footage (before intro is added).</div>
+        </div>
+        <div>
+          <label class="f">…or auto-detect the biggest hits</label>
+          <select id="autoReplays">
+            <option value="0">Off</option>
+            <option value="1">Top 1</option>
+            <option value="2">Top 2</option>
+            <option value="3">Top 3</option>
+            <option value="5">Top 5</option>
+            <option value="8">Top 8</option>
+          </select>
+          <label class="chk" style="margin-top:8px"><input type="checkbox" id="replaySmooth">
+            Smooth motion-interpolation (fluid, slower render)</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <button class="go" id="go">Render final video →</button>
+
+  <div class="prog" id="prog">
+    <div><span class="pct" id="pct">0%</span>Rendering</div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="pmsg" id="pmsg">Starting…</div>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <div class="done" id="done">
+    <b style="color:var(--ok)">✅ Your video is ready</b>
+    <div id="meta" class="small" style="margin-top:6px"></div>
+    <div>
+      <a class="dl" id="dlVideo">⬇ Download MP4</a>
+      <a class="dl2" id="dlSrt">⬇ Download .srt</a>
+      <a class="dl2" id="openStudio">🖊 Annotate in Form Studio</a>
+      <a class="dl2" id="dlMeta">⬇ YouTube text</a>
+    </div>
+    <video id="preview" controls></video>
+
+    <div class="ytbox" id="ytbox" style="display:none">
+      <h4>📋 YouTube details</h4>
+      <div class="small" style="color:var(--muted)">Title, description (with
+        clickable chapters) and tags — copy them straight into YouTube.</div>
+      <div class="ytrow">
+        <div class="lbl"><span>Title</span>
+          <button class="copybtn" data-copy="ytTitle">Copy</button></div>
+        <input class="ytf" id="ytTitle" type="text">
+      </div>
+      <div class="ytrow">
+        <div class="lbl"><span>Description</span>
+          <button class="copybtn" data-copy="ytDesc">Copy</button></div>
+        <textarea id="ytDesc" rows="12"></textarea>
+      </div>
+      <div class="ytrow">
+        <div class="lbl"><span>Tags</span>
+          <button class="copybtn" data-copy="ytTags">Copy</button></div>
+        <textarea id="ytTags" rows="2"></textarea>
+      </div>
+
+      <div class="ytrow" style="border-top:1px solid #1f4d33;padding-top:12px">
+        <div class="lbl"><span>⬆ Upload to YouTube</span></div>
+        <div id="ytUploadReady" style="display:none">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="ytPrivacy" class="ytf" style="width:auto;padding:9px 11px">
+              <option value="unlisted">Unlisted</option>
+              <option value="private">Private</option>
+              <option value="public">Public</option>
+            </select>
+            <button class="copybtn" id="ytUploadBtn"
+              style="padding:9px 16px">⬆ Upload now</button>
+            <span class="small" id="ytUpMsg" style="color:var(--muted)"></span>
+          </div>
+          <div class="small" style="color:var(--muted);margin-top:6px">
+            Uploads this video with the title, description &amp; tags above.
+            Unverified Google projects may force the video to Private until
+            verified — that's a YouTube policy.</div>
+        </div>
+        <div id="ytUploadSetup" class="small" style="display:none;color:var(--muted)">
+          One-time setup to enable upload:
+          <ol style="margin:6px 0 0;padding-left:18px;line-height:1.6">
+            <li>In Google Cloud, create a project &amp; enable
+              <b>YouTube Data API v3</b>.</li>
+            <li>Create an OAuth client ID (type <b>Desktop app</b>); save the JSON
+              as <code>client_secret.json</code> in the fight-sync folder.</li>
+            <li>Run once in the terminal:
+              <code>.venv\Scripts\python youtube_auth.py</code></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="ytbox" id="reelbox" style="display:none;border-color:#3a3158;background:#15121f">
+      <h4>🎬 Shorts / highlights reel</h4>
+      <div class="small" style="color:var(--muted)">Auto-cut a vertical 9:16 reel
+        from your biggest hits — ready for YouTube Shorts, Reels or TikTok.</div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="copybtn" id="reelBtn" style="padding:9px 16px">🎬 Make reel</button>
+        <span class="small" id="reelMsg" style="color:var(--muted)"></span>
+      </div>
+      <video id="reelPreview" controls style="display:none"></video>
+      <div><a class="dl2" id="dlReel" style="display:none">⬇ Download reel</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="cropModal">
+  <div class="modalbox">
+    <h3>Confirm gameplay crop</h3>
+    <p class="small" style="margin:2px 0 0">Drag the box to move, pull the corner to
+      resize. This becomes the channel's saved crop template.</p>
+    <div class="cropstage" id="cropStage">
+      <img id="cropImg" alt="">
+      <div class="cropbox" id="cropBox"><span class="rh"></span></div>
+    </div>
+    <div class="modalbtns">
+      <button class="dl" id="cropConfirm">✓ Use this crop</button>
+      <button class="dl2" id="cropFull">Use full frame</button>
+      <button class="dl2" id="cropCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {gameplay:[], facecam:[], layout:"pip",
+  pip_position:"br", pip_scale:"0.26", audio_mode:"mix"};
+const zones = {};
+const $ = id=>document.getElementById(id);
+let syncTimer=null, lastSyncKey="";
+
+function baseName(p){ return (p||"").split(/[\\/]/).pop(); }
+function renderItems(name){
+  const z=zones[name]; z.itemsEl.innerHTML="";
+  state[name].forEach((it,i)=>{
+    const li=document.createElement("li");
+    li.innerHTML='<span class="num">'+(i+1)+'</span><span class="inm"></span><button title="remove">×</button>';
+    li.querySelector(".inm").textContent=it.name;
+    li.querySelector("button").onclick=ev=>{ ev.stopPropagation(); state[name].splice(i,1); renderItems(name); };
+    z.itemsEl.appendChild(li);
+  });
+  z.el.classList.toggle("has", state[name].length>0);
+  scheduleSync();
+}
+function addItem(name, path, displayName){
+  state[name].push({path, name:displayName||baseName(path)}); renderItems(name);
+}
+function stageFile(name, file, onprog){
+  return new Promise((res,rej)=>{
+    const fd=new FormData(); fd.append("file",file,file.name); fd.append("name",name);
+    const xhr=new XMLHttpRequest(); xhr.open("POST","/api/upload");
+    xhr.upload.onprogress=e=>{ if(onprog&&e.lengthComputable) onprog(Math.round(e.loaded/e.total*100)); };
+    xhr.onload=()=> xhr.status===200 ? res(JSON.parse(xhr.responseText).path) : rej(xhr.status);
+    xhr.onerror=()=>rej("net"); xhr.send(fd);
+  });
+}
+async function addFiles(name, files, statusEl){
+  const list=[...files]; let i=0;
+  for(const f of list){
+    const n=++i;
+    try{ const p=await stageFile(name,f,pct=>{ if(statusEl)
+      statusEl.textContent="Uploading "+f.name+" "+pct+"% ("+n+"/"+list.length+")"; });
+      addItem(name,p,f.name); }
+    catch(_){ showErr("Upload failed: "+f.name); }
+  }
+  if(statusEl) statusEl.textContent="";
+}
+
+// auto-sync preview: runs as soon as both sections have clip(s)
+function scheduleSync(){ clearTimeout(syncTimer); syncTimer=setTimeout(checkSync, 500); }
+async function checkSync(){
+  const gs=state.gameplay, fs=state.facecam, sec=$("syncSection"), out=$("syncStatus");
+  if(!gs.length || !fs.length){ sec.style.display="none";
+    $("previewSection").style.display="none"; lastSyncKey=""; return; }
+  sec.style.display="block";
+  const key=JSON.stringify([gs.map(i=>i.path),fs.map(i=>i.path)]);
+  if(key===lastSyncKey) return;
+  lastSyncKey=key;
+  out.innerHTML='<div class="syncmsg">Syncing '+gs.length+' clip(s)…</div>';
+  try{
+    const fd=new FormData();
+    fd.append("gameplay_paths_json",JSON.stringify(gs.map(i=>i.path)));
+    fd.append("facecam_paths_json",JSON.stringify(fs.map(i=>i.path)));
+    const d=await (await fetch("/api/sync",{method:"POST",body:fd})).json();
+    if(key!==lastSyncKey) return;   // a newer change superseded this
+    out.innerHTML="";
+    if(!d.counts_match){ const w=document.createElement("div"); w.className="syncmsg";
+      w.textContent="⚠ "+gs.length+" gameplay vs "+fs.length+" facecam — add the same "+
+        "number before rendering (they pair up in order)."; out.appendChild(w); }
+    d.pairs.forEach((p,i)=>{
+      const row=document.createElement("div"); let mark,det,cls;
+      if(p.error){ cls="bad"; mark="✕"; det="couldn't read clip ("+p.error+")"; }
+      else if(!p.shares_audio){ cls="warn"; mark="◐"; det="no shared sound to auto-sync — aligned from the start (nudge below if needed)"; }
+      else if(!p.ok){ cls="warn"; mark="⚠"; det="weak match ("+Math.round(p.confidence*100)+"%) — aligned from the start; nudge below if needed"; }
+      else { cls="ok"; mark="✓"; det="offset "+p.offset+"s · confidence "+Math.round(p.confidence*100)+"% · "+p.out_dur+"s synced"; }
+      row.className="syncrow "+cls;
+      row.innerHTML='<span class="rmark">'+mark+'</span><span class="rname">'+
+        (d.pairs.length>1?("Round "+(i+1)):"Sync")+'</span><span class="rdet"></span>';
+      row.querySelector(".rdet").textContent=det;
+      out.appendChild(row);
+    });
+    const p0=d.pairs[0];
+    if(p0 && !p0.error){
+      // only trust the detected offset when the audio actually locked; otherwise
+      // start-align (the detected value is unreliable and would look way off)
+      const off=(p0.ok ? (p0.offset||0) : 0);
+      const gp=gs[0].path, fp=fs[0].path;
+      pv.detected=off; pv.manual=0; pv.touched=false; updateOffsetLabel();
+      const base = p0.ok
+        ? "Auto-synced (offset "+off+"s). Press play to check — nudge below to fine-tune."
+        : "No shared sound to auto-sync — aligned from the start. If you started both "+
+          "recordings together this is correct; use Fine-tune to nudge.";
+      pv.pairKey=gp+"|"+fp; const tok=pv.pairKey;
+      setupPreview(gp, fp, off);                       // show a still frame only
+      // Don't let them PLAY the raw iPhone HEVC — it decodes at a few fps and is
+      // choppy. Disable play until the smooth full-length proxies are built
+      // (~10s), then swap them in. This is the real fix for the chop.
+      $("pvPlay").disabled=true;
+      $("pvNote").textContent=base+"  ·  ⏳ building smooth preview (~10s)…";
+      Promise.all([ensureProxy(gp,0), ensureProxy(fp,0)]).then(([pgx,pfx])=>{
+        if(pv.pairKey!==tok) return;                   // clips changed meanwhile
+        setupPreview(pgx, pfx, pv.detected+pv.manual); // swap to smooth proxies
+        $("pvPlay").disabled=false;
+        $("pvNote").textContent=base+"  ·  ✓ smooth preview ready";
+      }).catch(()=>{ $("pvPlay").disabled=false;
+        $("pvNote").textContent=base+"  ·  ⚠ preview may be choppy (proxy failed)"; });
+    } else { $("previewSection").style.display="none"; }
+  }catch(_){ out.innerHTML='<div class="syncmsg">⚠ sync check failed</div>'; lastSyncKey=""; }
+}
+
+// side-by-side synced preview player (first clip pair)
+const pv={gPath:null,fPath:null,aStart:0,bStart:0,dur:0,t:0,playing:false,seeked:false,
+          pairKey:"",detected:0,manual:0,touched:false};
+function updateOffsetLabel(){
+  const o=pv.detected+pv.manual;
+  $("pvOffset").textContent=(o>=0?"+":"")+o.toFixed(1)+"s";
+}
+function reSeekOffset(off){            // shift alignment, keep current position
+  const G=$("pvG"),F=$("pvF");
+  pv.aStart=Math.max(off,0); pv.bStart=Math.max(-off,0);
+  pv.dur=Math.max(0.1, Math.min((G.duration||0)-pv.aStart,(F.duration||0)-pv.bStart));
+  pvApply(Math.min(pv.t, pv.dur));
+}
+function applyNudge(delta){
+  pv.manual=Math.round((pv.manual+delta)*10)/10; pv.touched=true;
+  updateOffsetLabel(); reSeekOffset(pv.detected+pv.manual);
+}
+document.querySelectorAll(".pvnudge [data-nudge]").forEach(b=>{
+  b.addEventListener("click",()=>applyNudge(parseFloat(b.dataset.nudge)));
+});
+$("pvNudgeReset").addEventListener("click",()=>{
+  pv.manual=0; pv.touched=true; updateOffsetLabel(); reSeekOffset(pv.detected);
+});
+function ensureProxy(path, seconds){
+  return new Promise(res=>{
+    const fd=new FormData(); fd.append("path",path); if(seconds) fd.append("seconds",seconds);
+    fetch("/api/proxy",{method:"POST",body:fd}).then(r=>r.json()).then(({job_id})=>{
+      const t=setInterval(async()=>{
+        const s=await (await fetch("/api/status/"+job_id)).json();
+        if(s.status==="done"){ clearInterval(t); res(s.result.path); }
+        else if(s.status==="error"){ clearInterval(t); res(path); }
+      },800);
+    }).catch(()=>res(path));
+  });
+}
+function setupPreview(gPath,fPath,offset){
+  $("previewSection").style.display="block";
+  const G=$("pvG"),F=$("pvF");
+  pv.aStart=Math.max(offset,0); pv.bStart=Math.max(-offset,0); pv.t=0; pv.seeked=false;
+  if(pv.gPath!==gPath){ G.src="/api/media?path="+encodeURIComponent(gPath); pv.gPath=gPath; }
+  if(pv.fPath!==fPath){ F.src="/api/media?path="+encodeURIComponent(fPath); pv.fPath=fPath; }
+  const meta=()=>{ if(G.readyState>=1&&F.readyState>=1){
+    pv.dur=Math.max(0.1, Math.min((G.duration||0)-pv.aStart, (F.duration||0)-pv.bStart));
+    pvBar(); } };
+  const seekStart=()=>{ if(!pv.seeked && G.readyState>=2 && F.readyState>=2){ pv.seeked=true; pvApply(0); } };
+  G.onloadedmetadata=meta; F.onloadedmetadata=meta;
+  G.oncanplay=seekStart; F.oncanplay=seekStart;
+  meta(); seekStart();
+}
+function pvApply(t){ t=Math.max(0,Math.min(t, pv.dur||1e9)); pv.t=t;
+  $("pvG").currentTime=pv.aStart+t; $("pvF").currentTime=pv.bStart+t; pvBar(); }
+function pvBar(){ $("pvSeek").value=pv.dur?Math.round(pv.t/pv.dur*1000):0;
+  $("pvTime").textContent=fmtT(pv.t)+" / "+fmtT(pv.dur); }
+function pvLoop(){ if(!pv.playing) return; const G=$("pvG"),F=$("pvF");
+  pv.t=Math.max(0, G.currentTime-pv.aStart);
+  const target=pv.bStart+pv.t, drift=F.currentTime-target;
+  // gently nudge the follower's speed to stay in sync (no stutter-seeking);
+  // only hard-seek if it has fallen way out (e.g. a decode stall)
+  if(Math.abs(drift)>0.6){ if(!F.seeking) F.currentTime=target; F.playbackRate=1; }
+  else { F.playbackRate=Math.max(0.85, Math.min(1.15, 1-drift)); }
+  pvBar();
+  if(pv.t>=pv.dur){ G.pause(); F.pause(); F.playbackRate=1; pv.playing=false; $("pvPlay").textContent="▶"; return; }
+  requestAnimationFrame(pvLoop);
+}
+$("pvPlay").addEventListener("click",()=>{ const G=$("pvG"),F=$("pvF");
+  if(G.paused){
+    if(pv.t>=pv.dur-0.05) pv.t=0;
+    G.currentTime=pv.aStart+pv.t; F.currentTime=pv.bStart+pv.t;   // re-assert (now seekable)
+    Promise.allSettled([G.play(),F.play()]).then(()=>{
+      pv.playing=true; $("pvPlay").textContent="❚❚"; requestAnimationFrame(pvLoop); });
+  } else { G.pause(); F.pause(); pv.playing=false; $("pvPlay").textContent="▶"; } });
+$("pvSeek").addEventListener("input",()=>{ if(pv.dur){
+  $("pvG").pause(); $("pvF").pause(); pv.playing=false; $("pvPlay").textContent="▶";
+  pvApply($("pvSeek").value/1000*pv.dur); } });
+$("pvAudio").addEventListener("change",e=>{ $("pvG").muted=!e.target.checked; });
+window._pv=pv;
+
+function wireDrop(id){
+  const el=document.getElementById(id), name=el.dataset.name;
+  const itemsEl=el.querySelector("[data-items]");
+  const addStatus=el.querySelector("[data-addstatus]");
+  const pathToggle=el.querySelector(".pathtoggle");
+  const pathLine=el.querySelector(".pathline");
+  const pathInput=el.querySelector("[data-path]");
+  const picker=document.createElement("input");
+  picker.type="file"; picker.accept="video/*"; picker.multiple=true;
+  picker.style.display="none"; el.appendChild(picker);
+  zones[name]={el,name,itemsEl,markRecorded:(p,l)=>addItem(name,p,l||baseName(p))};
+
+  el.addEventListener("click",e=>{
+    if(e.target.closest(".pathtoggle")||e.target.closest(".pathline")||
+       e.target.closest(".recctl")||e.target.closest(".recbar")||
+       e.target.closest(".metaline")||e.target.closest(".metastatus")||
+       e.target.closest(".items"))return;
+    picker.click();
+  });
+  picker.addEventListener("change",()=>{ if(picker.files.length){ addFiles(name,picker.files,addStatus); picker.value=""; } });
+  ["dragover","dragenter"].forEach(ev=>el.addEventListener(ev,e=>{ e.preventDefault(); el.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev=>el.addEventListener(ev,e=>{ e.preventDefault(); el.classList.remove("over"); }));
+  el.addEventListener("drop",e=>{ if(e.dataTransfer.files.length) addFiles(name,e.dataTransfer.files,addStatus); });
+  pathToggle.addEventListener("click",e=>{ e.stopPropagation();
+    pathLine.style.display=pathLine.style.display==="none"?"flex":"none"; });
+  pathInput.addEventListener("click",e=>e.stopPropagation());
+  pathInput.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.stopPropagation();
+    const v=pathInput.value.trim(); if(v){ addItem(name,v,baseName(v)); pathInput.value=""; } } });
+}
+wireDrop("dropG"); wireDrop("dropF");
+
+// ── in-browser screen / webcam recorder ──────────────────────────────────
+function fmtT(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function pickMime(){
+  const c=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"];
+  for(const m of c){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }
+  return "";
+}
+function wireRecord(id){
+  const el=document.getElementById(id), name=el.dataset.name;
+  const kind = name==="gameplay" ? "screen" : "webcam";
+  const recBtn=el.querySelector("[data-rec]"), micChk=el.querySelector("[data-mic]");
+  const recBar=el.querySelector("[data-recbar]"), recTime=el.querySelector("[data-rectime]");
+  const recStop=el.querySelector("[data-recstop]"), recStatus=el.querySelector("[data-recstatus]");
+
+  const api = navigator.mediaDevices;
+  const ok = !!(api && window.MediaRecorder &&
+    (kind==="screen" ? api.getDisplayMedia : api.getUserMedia));
+  if(!ok){
+    recBtn.disabled=true; recBtn.textContent="● Recording unavailable";
+    recBtn.title="Open via http://127.0.0.1 in Chrome or Edge to record";
+    return;
+  }
+
+  recBtn.addEventListener("click",async e=>{
+    e.stopPropagation();
+    let stream, micStream=null;
+    try{
+      if(kind==="screen"){
+        stream = await api.getDisplayMedia({video:{frameRate:30}, audio:true});
+        if(micChk && micChk.checked){
+          try{ micStream = await api.getUserMedia(
+            {audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}); }
+          catch(_){ /* mic optional */ }
+        }
+      } else {
+        stream = await api.getUserMedia(
+          {video:{width:1280,height:720,frameRate:30}, audio:true});
+      }
+    }catch(_){ showErr("Recording cancelled or permission denied."); return; }
+
+    // mix display/system audio + mic into one track
+    const vtrack = stream.getVideoTracks()[0];
+    const AC = window.AudioContext||window.webkitAudioContext;
+    const ctx = new AC(), dest = ctx.createMediaStreamDestination();
+    let hasAudio=false;
+    if(stream.getAudioTracks().length){
+      ctx.createMediaStreamSource(new MediaStream([stream.getAudioTracks()[0]])).connect(dest);
+      hasAudio=true;
+    }
+    if(micStream){ ctx.createMediaStreamSource(micStream).connect(dest); hasAudio=true; }
+    const out=[vtrack]; if(hasAudio) out.push(dest.stream.getAudioTracks()[0]);
+    const mixed = new MediaStream(out);
+
+    const mime = pickMime();
+    const rec = new MediaRecorder(mixed, mime?{mimeType:mime}:undefined);
+    const chunks=[];
+    rec.ondataavailable = ev=>{ if(ev.data && ev.data.size) chunks.push(ev.data); };
+    const t0=performance.now();
+    const timer=setInterval(()=>{ recTime.textContent=fmtT((performance.now()-t0)/1000); },500);
+
+    rec.onstop = async ()=>{
+      clearInterval(timer);
+      const secs=(performance.now()-t0)/1000;
+      const blob=new Blob(chunks,{type:rec.mimeType||"video/webm"});
+      [stream,micStream].forEach(s=>{ if(s) s.getTracks().forEach(t=>t.stop()); });
+      try{ ctx.close(); }catch(_){}
+      recStop.disabled=true; recStatus.textContent="uploading…";
+      await uploadRecording(name, blob, fmtT(secs), recStatus);
+      recBar.classList.remove("show"); recBtn.style.display="";
+      recStop.disabled=false;
+    };
+    vtrack.addEventListener("ended",()=>{ if(rec.state!=="inactive") rec.stop(); });
+    recStop.onclick=()=>{ if(rec.state!=="inactive") rec.stop(); };
+
+    rec.start(1000);
+    recBtn.style.display="none";
+    recStatus.textContent=""; recTime.textContent="0:00";
+    recBar.classList.add("show");
+  });
+}
+function uploadRecording(name, blob, label, statusEl){
+  return new Promise(res=>{
+    const fd=new FormData();
+    fd.append("file", blob, name+"-recording.webm");
+    fd.append("name", name);
+    const xhr=new XMLHttpRequest();
+    xhr.open("POST","/api/upload_recording");
+    xhr.upload.onprogress=e=>{ if(e.lengthComputable)
+      statusEl.textContent="uploading "+Math.round(e.loaded/e.total*100)+"%"; };
+    xhr.onload=()=>{
+      if(xhr.status===200){
+        const {path}=JSON.parse(xhr.responseText);
+        zones[name].markRecorded(path, label);
+      } else showErr("Recording upload failed ("+xhr.status+").");
+      res();
+    };
+    xhr.onerror=()=>{ showErr("Recording upload failed."); res(); };
+    xhr.send(fd);
+  });
+}
+wireRecord("dropG"); wireRecord("dropF");
+
+// ── Upload from library (iPhone Photos etc.) → stage with progress ────────
+(function wireLibrary(){
+  const el=$("dropF"), name="facecam";
+  const btn=el.querySelector("[data-lib]"), status=el.querySelector("[data-libstatus]");
+  if(!btn) return;
+  const inp=document.createElement("input");
+  inp.type="file"; inp.accept="video/*"; inp.style.display="none"; el.appendChild(inp);
+  btn.addEventListener("click",e=>{ e.stopPropagation(); inp.click(); });
+  inp.addEventListener("change",()=>{ if(inp.files[0]) upload(inp.files[0]); });
+  function upload(f){
+    status.textContent="Uploading "+f.name+"…";
+    const fd=new FormData(); fd.append("file",f,f.name); fd.append("name",name);
+    const xhr=new XMLHttpRequest(); xhr.open("POST","/api/upload");
+    xhr.upload.onprogress=e=>{ if(e.lengthComputable)
+      status.textContent="Uploading "+Math.round(e.loaded/e.total*100)+"%"; };
+    xhr.onload=()=>{ if(xhr.status===200){ const {path}=JSON.parse(xhr.responseText);
+        zones.facecam.markRecorded(path, f.name); status.textContent="✓ uploaded as facecam"; }
+      else status.textContent="⚠ upload failed ("+xhr.status+")"; };
+    xhr.onerror=()=>{ status.textContent="⚠ upload failed"; };
+    xhr.send(fd);
+  }
+})();
+
+// ── Meta Quest clip: import gameplay from a share link ────────────────────
+(function wireMeta(){
+  const el=$("dropG");
+  const toggle=el.querySelector("[data-metatoggle]"), line=el.querySelector("[data-metaline]");
+  const urlIn=el.querySelector("[data-metaurl]"), go=el.querySelector("[data-metago]");
+  const status=el.querySelector("[data-metastatus]");
+  toggle.addEventListener("click",e=>{ e.stopPropagation();
+    line.style.display=line.style.display==="none"?"flex":"none"; });
+  urlIn.addEventListener("click",e=>e.stopPropagation());
+  urlIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.stopPropagation(); imp(); } });
+  go.addEventListener("click",e=>{ e.stopPropagation(); imp(); });
+  async function imp(){
+    const url=urlIn.value.trim(); if(!url) return;
+    go.disabled=true; status.textContent="Importing…";
+    try{
+      const fd=new FormData(); fd.append("url",url); fd.append("name","gameplay");
+      const r=await fetch("/api/import_url",{method:"POST",body:fd});
+      if(!r.ok){ go.disabled=false; status.textContent="⚠ "+(await r.text()).slice(0,200); return; }
+      const {job_id}=await r.json();
+      const t=setInterval(async()=>{
+        const s=await (await fetch("/api/status/"+job_id)).json();
+        status.textContent=s.message||"";
+        if(s.status==="done"){ clearInterval(t); go.disabled=false;
+          zones.gameplay.markRecorded(s.result.final,"Meta clip");
+          status.textContent="✓ imported as gameplay"; }
+        else if(s.status==="error"){ clearInterval(t); go.disabled=false;
+          status.textContent="⚠ "+s.message; }
+      },1000);
+    }catch(e){ go.disabled=false; status.textContent="⚠ import failed: "+e; }
+  }
+})();
+
+// ── channels: live detection + capture + auto-crop ───────────────────────
+function formData(obj){ const fd=new FormData(); for(const k in obj) fd.append(k,obj[k]); return fd; }
+function esc(s){ const d=document.createElement("div"); d.textContent=s==null?"":s; return d.innerHTML; }
+const chanState = {};   // channel id -> {rec} while recording
+
+function postRecording(blob, statusEl){
+  return new Promise((res,rej)=>{
+    const fd=new FormData();
+    fd.append("file", blob, "gameplay-recording.webm");
+    fd.append("name","gameplay");
+    const xhr=new XMLHttpRequest();
+    xhr.open("POST","/api/upload_recording");
+    xhr.upload.onprogress=e=>{ if(statusEl&&e.lengthComputable)
+      statusEl.textContent="upload "+Math.round(e.loaded/e.total*100)+"%"; };
+    xhr.onload=()=>{ xhr.status===200 ? res(JSON.parse(xhr.responseText).path) : rej(xhr.status); };
+    xhr.onerror=()=>rej("network");
+    xhr.send(fd);
+  });
+}
+
+async function startChanCapture(c, capBtn, recEl){
+  let stream, micStream=null;
+  try{
+    stream = await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30}, audio:true});
+    try{ micStream = await navigator.mediaDevices.getUserMedia(
+      {audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}); }catch(_){}
+  }catch(_){ showErr("Screen capture cancelled or unavailable."); return; }
+
+  const vtrack=stream.getVideoTracks()[0];
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const ctx=new AC(), dest=ctx.createMediaStreamDestination();
+  let hasAudio=false;
+  if(stream.getAudioTracks().length){
+    ctx.createMediaStreamSource(new MediaStream([stream.getAudioTracks()[0]])).connect(dest); hasAudio=true; }
+  if(micStream){ ctx.createMediaStreamSource(micStream).connect(dest); hasAudio=true; }
+  const out=[vtrack]; if(hasAudio) out.push(dest.stream.getAudioTracks()[0]);
+  const mixed=new MediaStream(out);
+
+  const mime=pickMime();
+  const rec=new MediaRecorder(mixed, mime?{mimeType:mime}:undefined);
+  const chunks=[]; rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  const t0=performance.now();
+  const timer=setInterval(()=>{ recEl.textContent=fmtT((performance.now()-t0)/1000); },500);
+  rec.onstop=async ()=>{
+    clearInterval(timer);
+    const blob=new Blob(chunks,{type:rec.mimeType||"video/webm"});
+    [stream,micStream].forEach(s=>{ if(s) s.getTracks().forEach(t=>t.stop()); });
+    try{ ctx.close(); }catch(_){}
+    delete chanState[c.id];
+    capBtn.classList.remove("recording"); capBtn.textContent="Capture";
+    await onChanRecorded(c, blob, recEl);
+  };
+  vtrack.addEventListener("ended",()=>{ if(rec.state!=="inactive") rec.stop(); });
+  rec.start(1000);
+  chanState[c.id]={rec};
+  capBtn.classList.add("recording"); capBtn.textContent="■ Stop"; capBtn.disabled=false;
+  recEl.textContent="0:00";
+}
+
+async function onChanRecorded(c, blob, recEl){
+  recEl.textContent="upload…";
+  let path;
+  try{ path=await postRecording(blob, recEl); }
+  catch(_){ showErr("Recording upload failed."); recEl.textContent=""; return; }
+  recEl.textContent="analyzing…";
+  let det;
+  try{ det=await (await fetch("/api/detect_crop",{method:"POST",
+        body:formData({path, channel_id:c.id})})).json(); }
+  catch(_){ showErr("Crop detection failed; using full frame.");
+    zones.gameplay.markRecorded(path, c.name+" (full)"); recEl.textContent=""; return; }
+  recEl.textContent="";
+  openCropper(det, async (result)=>{
+    if(result==="cancel"){ zones.gameplay.markRecorded(path, c.name+" (uncropped)"); return; }
+    if(result==="full"){ zones.gameplay.markRecorded(path, c.name+" (full frame)"); return; }
+    let cropped;
+    try{
+      const r=await fetch("/api/apply_crop",{method:"POST",
+        body:formData({path, x:result.x, y:result.y, w:result.w, h:result.h})});
+      cropped=(await r.json()).path;
+    }catch(_){ showErr("Crop apply failed."); return; }
+    zones.gameplay.markRecorded(cropped, c.name+" gameplay");
+    fetch("/api/channels/"+c.id+"/crop",{method:"POST",
+      body:formData({x:result.x,y:result.y,w:result.w,h:result.h,
+        frame_w:det.frame_w, frame_h:det.frame_h})});
+  });
+}
+
+// ── interactive cropper ──────────────────────────────────────────────────
+let cropResolve=null, cropScale=1, cropFrame={w:0,h:0};
+function setBox(l,t,w,h){
+  const img=$("cropImg"), box=$("cropBox");
+  const maxW=img.clientWidth, maxH=img.clientHeight;
+  w=Math.max(20,Math.min(w,maxW)); h=Math.max(20,Math.min(h,maxH));
+  l=Math.max(0,Math.min(l,maxW-w)); t=Math.max(0,Math.min(t,maxH-h));
+  box.style.left=l+"px"; box.style.top=t+"px"; box.style.width=w+"px"; box.style.height=h+"px";
+}
+function openCropper(det, onDone){
+  cropResolve=onDone; cropFrame={w:det.frame_w, h:det.frame_h};
+  const img=$("cropImg");
+  img.onload=()=>{
+    cropScale = img.clientWidth / cropFrame.w;
+    const cr=det.crop;
+    setBox(cr.x*cropScale, cr.y*cropScale, cr.w*cropScale, cr.h*cropScale);
+  };
+  img.src=det.preview;
+  $("cropModal").classList.add("show");
+}
+(function(){
+  const box=$("cropBox"); let mode=null,sx,sy,bl,bt,bw,bh;
+  function start(e,m){ mode=m; sx=e.clientX; sy=e.clientY;
+    bl=parseFloat(box.style.left)||0; bt=parseFloat(box.style.top)||0;
+    bw=box.offsetWidth; bh=box.offsetHeight; e.preventDefault(); e.stopPropagation(); }
+  box.addEventListener("mousedown",e=>{
+    start(e, e.target.classList.contains("rh")?"resize":"move"); });
+  window.addEventListener("mousemove",e=>{
+    if(!mode) return; const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(mode==="move") setBox(bl+dx,bt+dy,bw,bh); else setBox(bl,bt,bw+dx,bh+dy); });
+  window.addEventListener("mouseup",()=>{ mode=null; });
+})();
+function finishCrop(kind){
+  $("cropModal").classList.remove("show");
+  const cb=cropResolve; cropResolve=null; if(!cb) return;
+  if(kind==="cancel") return cb("cancel");
+  if(kind==="full") return cb("full");
+  const box=$("cropBox"), s=cropScale;
+  let x=Math.round((parseFloat(box.style.left)||0)/s);
+  let y=Math.round((parseFloat(box.style.top)||0)/s);
+  let w=Math.round(box.offsetWidth/s), h=Math.round(box.offsetHeight/s);
+  x-=x%2; y-=y%2; w-=w%2; h-=h%2;
+  x=Math.max(0,Math.min(x,cropFrame.w-2)); y=Math.max(0,Math.min(y,cropFrame.h-2));
+  w=Math.max(2,Math.min(w,cropFrame.w-x)); h=Math.max(2,Math.min(h,cropFrame.h-y));
+  cb({x,y,w,h});
+}
+$("cropConfirm").onclick=()=>finishCrop("use");
+$("cropFull").onclick=()=>finishCrop("full");
+$("cropCancel").onclick=()=>finishCrop("cancel");
+
+// ── channel list + live polling ──────────────────────────────────────────
+function renderChan(c){
+  const row=document.createElement("div"); row.className="chan"; row.dataset.id=c.id;
+  row.innerHTML=`<span class="nm">${esc(c.name||c.url)}</span>`+
+    `<span class="badge chk" data-badge>checking…</span>`+
+    `<span class="chanrec" data-rec></span>`+
+    `<button class="capbtn" data-cap disabled>Capture</button>`+
+    `<button class="chanx" data-x title="remove">×</button>`;
+  const cap=row.querySelector("[data-cap]"), recEl=row.querySelector("[data-rec]");
+  cap.addEventListener("click",()=>{
+    if(chanState[c.id]) chanState[c.id].rec.stop();
+    else startChanCapture(c, cap, recEl);
+  });
+  row.querySelector("[data-x]").addEventListener("click",async()=>{
+    await fetch("/api/channels/"+c.id,{method:"DELETE"}); loadChannels(); });
+  return row;
+}
+async function loadChannels(){
+  let data; try{ data=await (await fetch("/api/channels")).json(); }catch(_){ return; }
+  const list=$("chanList"); list.innerHTML="";
+  (data.channels||[]).forEach(c=>list.appendChild(renderChan(c)));
+  pollAllLive();
+}
+async function pollAllLive(){
+  for(const row of [...document.querySelectorAll(".chan")]){
+    const id=row.dataset.id, badge=row.querySelector("[data-badge]"), cap=row.querySelector("[data-cap]");
+    if(chanState[id]) continue;            // don't disturb a recording row
+    try{
+      const r=await (await fetch("/api/channels/"+id+"/live")).json();
+      if(chanState[id]) continue;
+      if(r.live){ badge.textContent="live"; badge.className="badge live";
+        cap.disabled=false; cap.title=r.title||""; }
+      else { badge.textContent="offline"; badge.className="badge off"; cap.disabled=true; }
+    }catch(_){ badge.textContent="?"; badge.className="badge off"; }
+  }
+}
+$("chanAdd").addEventListener("click",async()=>{
+  const url=$("chanUrl").value.trim(); if(!url) return;
+  $("chanAdd").disabled=true;
+  try{ await fetch("/api/channels",{method:"POST",body:formData({url})});
+    $("chanUrl").value=""; await loadChannels(); }
+  catch(_){ showErr("Could not add channel."); }
+  $("chanAdd").disabled=false;
+});
+$("chanUrl").addEventListener("keydown",e=>{ if(e.key==="Enter") $("chanAdd").click(); });
+loadChannels();
+setInterval(pollAllLive, 60000);
+
+function wireSeg(id,key){
+  document.querySelectorAll("#"+id+" button").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll("#"+id+" button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); state[key]=b.dataset.v;
+    });
+  });
+}
+wireSeg("posSeg","pip_position");
+wireSeg("sizeSeg","pip_scale");
+wireSeg("audioSeg","audio_mode");
+wireSeg("layoutSeg","layout");
+document.querySelectorAll("#layoutSeg button").forEach(b=>b.addEventListener("click",()=>{
+  $("pipOpts").style.display = state.layout==="sbs" ? "none" : "grid";
+}));
+
+let pollTimer=null;
+let lastJobId=null;
+
+$("replays").addEventListener("change",e=>{
+  $("replayOpts").style.display = e.target.checked ? "block" : "none";
+});
+
+$("go").addEventListener("click",async()=>{
+  const gs=state.gameplay, fs=state.facecam;
+  if(!gs.length||!fs.length){
+    showErr("Add at least one gameplay clip and one facecam clip.");return;
+  }
+  if(gs.length!==fs.length){
+    showErr("You have "+gs.length+" gameplay clip(s) but "+fs.length+
+      " facecam clip(s). Add the same number to each — they pair up in order.");return;
+  }
+  $("err").classList.remove("show"); $("done").classList.remove("show");
+  $("go").disabled=true; $("prog").classList.add("show");
+  setProg(2,"Starting…");
+
+  const fd=new FormData();
+  fd.append("gameplay_paths_json", JSON.stringify(gs.map(i=>i.path)));
+  fd.append("facecam_paths_json", JSON.stringify(fs.map(i=>i.path)));
+  fd.append("title",$("title").value);
+  fd.append("intro_subtitle",$("introSub").value);
+  fd.append("layout",state.layout);
+  fd.append("pip_position",state.pip_position);
+  fd.append("pip_scale",state.pip_scale);
+  fd.append("audio_mode",state.audio_mode);
+  fd.append("make_subtitles",$("subs").checked);
+  fd.append("burn_subtitles",$("burn").checked);
+  fd.append("intro",$("intro").checked);
+  fd.append("outro",$("outro").checked);
+  fd.append("whisper_model",$("model").value);
+  fd.append("replays",$("replays").checked);
+  fd.append("replay_times",$("replayTimes").value);
+  fd.append("auto_replays",$("autoReplays").value);
+  fd.append("replay_smooth",$("replaySmooth").checked);
+  fd.append("transitions",$("transitions").checked);
+  fd.append("transition_label",$("transLabel").value);
+  fd.append("bell",$("bell").checked);
+  // if the user fine-tuned alignment in the preview, render with exactly that
+  if(pv.touched){ fd.append("manual_offset",(pv.detected+pv.manual).toFixed(2)); }
+
+  try{
+    const r=await fetch("/api/render",{method:"POST",body:fd});
+    if(!r.ok){showErr((await r.json()).detail||"Upload failed");reset();return;}
+    const {job_id}=await r.json();
+    poll(job_id);
+  }catch(e){showErr(String(e));reset();}
+});
+
+function poll(id){
+  pollTimer=setInterval(async()=>{
+    const r=await fetch("/api/status/"+id);
+    const j=await r.json();
+    setProg(j.percent||0,j.message||"");
+    if(j.status==="done"){
+      clearInterval(pollTimer);
+      const res=j.result||{};
+      $("done").classList.add("show");
+      const rp=(res.replays&&res.replays.length)
+        ? ` · ${res.replays.length} slow-mo replay(s)` : '';
+      const cl=(res.clips&&res.clips>1) ? `${res.clips} clips · ` : '';
+      $("meta").textContent=
+        `${cl}Synced ${(res.duration||0).toFixed(0)}s · offset ${(res.offset||0).toFixed(2)}s · `+
+        `confidence ${((res.confidence||0)*100).toFixed(0)}%`+rp;
+      $("dlVideo").href="/api/download/"+id;
+      $("preview").src="/api/download/"+id;
+      if(res.final) $("openStudio").href="/studio?path="+encodeURIComponent(res.final);
+      if(res.subtitles){$("dlSrt").href="/api/subtitles/"+id;$("dlSrt").style.display="";}
+      else $("dlSrt").style.display="none";
+      fillYouTube(res.metadata,id);
+      lastJobId=id; setupActions(res);
+      reset();
+    }else if(j.status==="error"){
+      clearInterval(pollTimer); showErr(j.message||"Render failed"); reset();
+    }
+  },1200);
+}
+function fillYouTube(m,id){
+  const box=$("ytbox");
+  if(!m){box.style.display="none";$("dlMeta").style.display="none";return;}
+  box.style.display="";
+  $("ytTitle").value=m.title||"";
+  $("ytDesc").value=m.description||"";
+  $("ytTags").value=(m.tags||[]).join(", ");
+  $("dlMeta").href="/api/metadata/"+id;$("dlMeta").style.display="";
+}
+
+// generic poller for the short-lived reel / upload jobs
+function pollJob(id,onProg,onDone,onErr){
+  const t=setInterval(async()=>{
+    try{
+      const j=await (await fetch("/api/status/"+id)).json();
+      onProg&&onProg(j.percent||0,j.message||"");
+      if(j.status==="done"){clearInterval(t);onDone&&onDone(j.result||{});}
+      else if(j.status==="error"){clearInterval(t);onErr&&onErr(j.message||"failed");}
+    }catch(e){clearInterval(t);onErr&&onErr(String(e));}
+  },1200);
+}
+
+// show the reel maker + check whether YouTube upload is set up
+async function setupActions(res){
+  $("reelbox").style.display="";
+  $("reelMsg").textContent=""; $("reelBtn").disabled=false;
+  $("reelPreview").style.display="none"; $("dlReel").style.display="none";
+  try{
+    const st=await (await fetch("/api/youtube/state")).json();
+    const ready=st.configured&&st.authorized;
+    $("ytUploadReady").style.display=ready?"":"none";
+    $("ytUploadSetup").style.display=ready?"none":"";
+    $("ytUpMsg").textContent="";
+  }catch(e){ $("ytUploadReady").style.display="none";
+    $("ytUploadSetup").style.display=""; }
+}
+
+$("reelBtn").addEventListener("click",async()=>{
+  if(!lastJobId)return;
+  $("reelBtn").disabled=true; $("reelMsg").textContent="Starting…";
+  const fd=new FormData(); fd.append("label","HIGHLIGHTS");
+  try{
+    const {job_id}=await (await fetch("/api/shorts/"+lastJobId,
+      {method:"POST",body:fd})).json();
+    pollJob(job_id,
+      (p,m)=>$("reelMsg").textContent=`${p}% · ${m}`,
+      (r)=>{ $("reelMsg").textContent=`Done — ${r.clips} clips, ${(r.duration||0).toFixed(0)}s`;
+        $("reelPreview").src="/api/download/"+job_id; $("reelPreview").style.display="";
+        $("dlReel").href="/api/download/"+job_id; $("dlReel").style.display="";
+        $("reelBtn").disabled=false; },
+      (e)=>{ $("reelMsg").textContent="⚠ "+e; $("reelBtn").disabled=false; });
+  }catch(e){ $("reelMsg").textContent="⚠ "+e; $("reelBtn").disabled=false; }
+});
+
+$("ytUploadBtn").addEventListener("click",async()=>{
+  if(!lastJobId)return;
+  $("ytUploadBtn").disabled=true; $("ytUpMsg").textContent="Starting…";
+  const fd=new FormData(); fd.append("privacy",$("ytPrivacy").value);
+  try{
+    const {job_id}=await (await fetch("/api/youtube/upload/"+lastJobId,
+      {method:"POST",body:fd})).json();
+    pollJob(job_id,
+      (p,m)=>$("ytUpMsg").textContent=`${p}% · ${m}`,
+      (r)=>{ $("ytUpMsg").innerHTML=`✅ Uploaded (${r.privacy}) — `+
+        `<a href="${r.url}" target="_blank" style="color:var(--ok)">${r.url}</a>`;
+        $("ytUploadBtn").disabled=false; },
+      (e)=>{ $("ytUpMsg").textContent="⚠ "+e; $("ytUploadBtn").disabled=false; });
+  }catch(e){ $("ytUpMsg").textContent="⚠ "+e; $("ytUploadBtn").disabled=false; }
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".copybtn");if(!b)return;
+  const el=$(b.dataset.copy);if(!el)return;
+  el.select&&el.select();
+  navigator.clipboard.writeText(el.value).then(()=>{
+    const t=b.textContent;b.textContent="Copied ✓";b.classList.add("ok");
+    setTimeout(()=>{b.textContent=t;b.classList.remove("ok");},1400);
+  }).catch(()=>{});
+});
+function setProg(p,m){$("barfill").style.width=p+"%";$("pct").textContent=p+"%";$("pmsg").textContent=m;}
+function showErr(m){$("err").textContent="⚠ "+m;$("err").classList.add("show");}
+function reset(){$("go").disabled=false;}
+</script>
+</body>
+</html>

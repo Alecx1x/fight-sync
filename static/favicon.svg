@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#12161d"/>
+  <!-- wrist cuff -->
+  <rect x="21" y="40" width="26" height="15" rx="5" fill="#9e2a2a"/>
+  <!-- thumb -->
+  <rect x="11" y="27" width="14" height="16" rx="7" fill="#e23b3b"/>
+  <!-- main mitt (rounded knuckles) -->
+  <rect x="21" y="13" width="26" height="32" rx="13" fill="#e23b3b"/>
+  <!-- knuckle crease -->
+  <path d="M26 24 q8 -4 16 0" fill="none" stroke="#b02b2b" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- thumb separation crease -->
+  <path d="M24 30 a7 7 0 0 0 0 12" fill="none" stroke="#b02b2b" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- highlight -->
+  <ellipse cx="30" cy="20" rx="4.5" ry="3" fill="#ff6b6b" opacity="0.55"/>
+</svg>
