@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Cutout Cleanup — FightSync</title>
+<style>
+  :root{--bg:#0a0e16;--panel:#0e1626;--fg:#e7ecf5;--muted:#8a97ad;--accent:#e81a1e;--line:#2c3a52}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,sans-serif}
+  header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:50;background:var(--bg)}
+  header h1{font-size:18px;margin:0}
+  a.back{color:var(--muted);text-decoration:none;font-size:14px}
+  .wrap{display:flex;gap:16px;padding:16px;flex-wrap:wrap}
+  .stage{flex:1;min-width:300px}
+  .checker{background:
+    conic-gradient(#2a3242 25%, #1a2030 0 50%, #2a3242 0 75%, #1a2030 0) 0/24px 24px;
+    border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  canvas#view{max-width:100%;max-height:62vh;display:block;touch-action:none;cursor:crosshair}
+  .ctrls{width:330px;max-width:100%}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+  .card h2{font-size:14px;margin:0 0 10px;letter-spacing:.5px}
+  label.row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);margin:10px 0 3px}
+  input[type=range]{width:100%}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+  button{background:#16223a;color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;cursor:pointer}
+  button.on{background:var(--accent);border-color:var(--accent)}
+  button.primary{background:#1e7a3a;border-color:#1e7a3a}
+  button.warn{background:#3a1e1e;border-color:#5a2a2a}
+  .reelpick button.on{background:var(--accent);border-color:var(--accent)}
+  .hint{font-size:12px;color:var(--muted);line-height:1.5}
+  .scrub{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .scrub input{flex:1}
+  #status{font-size:13px;color:var(--muted);min-height:18px;margin-top:6px}
+  .b{color:var(--fg)}
+</style>
+</head>
+<body>
+<nav id="fsnav" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:7px 12px;background:#0b111c;border-bottom:1px solid #26324a;font:13px system-ui,'Segoe UI',Roboto,sans-serif;position:sticky;top:0;z-index:500">
+<a href="/" style="color:#e8eefc;text-decoration:none;font-weight:800;margin-right:8px">🥊 FightSync</a>
+<a href="/studio" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Form Studio</a>
+<a href="/label" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Labeler</a>
+<a href="/subtitles" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Captions</a>
+<a href="/cleanup" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Cleanup</a>
+<a href="/ninja" style="color:#c9a6ff;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🥷 Ninja Cam</a>
+<a href="/live" style="color:#ff7b7b;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🔴 Live</a>
+<script>document.querySelectorAll('#fsnav a').forEach(function(a){if(a.getAttribute('href')===location.pathname){a.style.background='#1b2740';a.style.color='#fff';}});</script>
+</nav>
+<header>
+  <h1>🧹 Cutout Cleanup</h1>
+  <div class="reelpick tools" id="reelPick"></div>
+  <span style="flex:1"></span>
+  <a class="back" href="/">← back to FightSync</a>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="checker"><canvas id="view" width="640" height="700"></canvas></div>
+    <div class="scrub">
+      <button id="play">▶</button>
+      <input type="range" id="frame" min="0" max="0" value="0">
+      <span id="fnum" class="hint">0 / 0</span>
+    </div>
+    <p class="hint" style="margin-top:8px">The checkerboard = see-through (clean). Anything you still see over it is kept. Goal: only your body shows.</p>
+  </div>
+
+  <div class="ctrls">
+    <div class="card">
+      <h2>1 · Remove background haze</h2>
+      <label class="row"><span>Tighten edges</span><span id="vTighten" class="b">40</span></label>
+      <input type="range" id="tighten" min="0" max="200" value="40">
+      <p class="hint">Drag right to wipe out faint background bleed. Your solid body stays — only the see-through haze disappears, so joints never get cut.</p>
+      <label class="row"><span>Shrink edge (choke)</span><span id="vChoke" class="b">0</span></label>
+      <input type="range" id="choke" min="0" max="8" value="0">
+      <label class="row"><span>Soften edge (feather)</span><span id="vFeather" class="b">1</span></label>
+      <input type="range" id="feather" min="0" max="6" value="1">
+    </div>
+
+    <div class="card">
+      <h2>2 · Trim leftover background</h2>
+      <div class="tools">
+        <button id="tKeep">▭ Keep-box</button>
+        <button id="tErase">🩹 Erase</button>
+        <button id="tRestore">↩ Restore</button>
+        <button id="tClear" class="warn">Clear marks</button>
+      </div>
+      <label class="row"><span>Brush size</span><span id="vBrush" class="b">60</span></label>
+      <input type="range" id="brush" min="14" max="160" value="60">
+      <p class="hint"><span class="b">Keep-box:</span> drag a box around your body — everything outside is removed (great for room in the corners). <span class="b">Erase:</span> paint over leftover background blobs. <span class="b">Restore:</span> paint a body part back if you took too much.</p>
+    </div>
+
+    <div class="card">
+      <div class="tools">
+        <button id="save" class="primary">💾 Save &amp; apply to clip</button>
+        <button id="reset" class="warn">Reset to original</button>
+      </div>
+      <div id="status"></div>
+      <p class="hint">Save bakes it into the reel (a pristine copy is kept, so you can always reset or re-edit). The VS intro will use the cleaned version next render.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let REELS=[], cur=null, imgs=[], fi=0, playing=null;
+let pw=640, ph=700;
+const view=$('view'), vctx=view.getContext('2d');
+const nat=document.createElement('canvas'), nctx=nat.getContext('2d',{willReadFrequently:true});
+const mask=document.createElement('canvas'), mctx=mask.getContext('2d',{willReadFrequently:true}); // 255=keep,0=remove
+let maskData=null, lut=new Uint8ClampedArray(256);
+
+function buildLut(){ const bp=+$('tighten').value; for(let a=0;a<256;a++){ lut[a]=bp>=255?0:Math.max(0,Math.min(255,(a-bp)/(255-bp)*255)); } }
+function refreshMaskData(){ maskData=mctx.getImageData(0,0,pw,ph).data; }
+
+async function loadReels(){
+  const j=await (await fetch('/api/cleanup/reels')).json();
+  REELS=j.reels||[];
+  const pick=$('reelPick'); pick.innerHTML='';
+  if(!REELS.length){ pick.innerHTML='<span class="hint">No reels yet — grab clips in the VS-intro section first.</span>'; return; }
+  REELS.forEach(r=>{ const b=document.createElement('button'); b.textContent=r.label+' ('+r.n+')';
+    b.onclick=()=>selectReel(r,b); pick.appendChild(b); });
+  selectReel(REELS[0], pick.firstChild);
+}
+
+async function selectReel(r,btn){
+  [...$('reelPick').children].forEach(c=>c.classList && c.classList.remove('on')); if(btn)btn.classList.add('on');
+  cur=r; pw=r.pw||640; ph=r.ph||700;
+  nat.width=pw;nat.height=ph; mask.width=pw;mask.height=ph; view.width=pw;view.height=ph;
+  mctx.fillStyle='#fff'; mctx.fillRect(0,0,pw,ph); refreshMaskData();
+  $('frame').max=r.n-1; $('frame').value=0; fi=0;
+  $('status').textContent='loading frames…';
+  imgs=await Promise.all(r.frames.map(p=>new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src='/api/media?path='+encodeURIComponent(p);})));
+  imgs=imgs.filter(Boolean);
+  $('status').textContent=imgs.length+' frames loaded.';
+  buildLut(); render();
+}
+
+function render(){
+  if(!imgs.length) return;
+  const im=imgs[Math.min(fi,imgs.length-1)];
+  nctx.clearRect(0,0,pw,ph); nctx.drawImage(im,0,0,pw,ph);
+  const d=nctx.getImageData(0,0,pw,ph), data=d.data;
+  for(let i=0,m=0;i<data.length;i+=4,m+=4){
+    let a=lut[data[i+3]];
+    if(maskData) a=a*maskData[m]/255;     // mask red channel (0/255)
+    data[i+3]=a;
+  }
+  vctx.clearRect(0,0,pw,ph); vctx.putImageData(d,0,0);
+  $('fnum').textContent=(fi+1)+' / '+imgs.length;
+}
+
+// ---- sliders ----
+['tighten','choke','feather','brush'].forEach(id=>{ $(id).addEventListener('input',()=>{
+  $('v'+id[0].toUpperCase()+id.slice(1)).textContent=$(id).value;
+  if(id==='tighten'){ buildLut(); render(); }
+}); });
+$('frame').addEventListener('input',()=>{ fi=+$('frame').value; render(); });
+$('play').addEventListener('click',()=>{
+  if(playing){ clearInterval(playing); playing=null; $('play').textContent='▶'; return; }
+  $('play').textContent='⏸'; playing=setInterval(()=>{ fi=(fi+1)%imgs.length; $('frame').value=fi; render(); }, 80);
+});
+
+// ---- mask tools ----
+let tool=null, drawing=false, keepStart=null;
+function setTool(t){ tool=t; ['tKeep','tErase','tRestore'].forEach(id=>$(id).classList.toggle('on', id==='t'+t)); }
+$('tKeep').onclick=()=>setTool('Keep'); $('tErase').onclick=()=>setTool('Erase'); $('tRestore').onclick=()=>setTool('Restore');
+$('tClear').onclick=()=>{ mctx.fillStyle='#fff'; mctx.fillRect(0,0,pw,ph); refreshMaskData(); render(); };
+
+function pos(e){ const r=view.getBoundingClientRect(); const x=( (e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width*pw;
+  const y=( (e.touches?e.touches[0].clientY:e.clientY)-r.top)/r.height*ph; return {x,y}; }
+function paint(p){ const rad=+$('brush').value/2; mctx.fillStyle=(tool==='Erase')?'#000':'#fff';
+  mctx.beginPath(); mctx.arc(p.x,p.y,rad,0,7); mctx.fill(); }
+function down(e){ if(!tool)return; e.preventDefault(); drawing=true;
+  if(tool==='Keep'){ keepStart=pos(e); } else { paint(pos(e)); refreshMaskData(); render(); } }
+function move(e){ if(!drawing)return; e.preventDefault();
+  if(tool==='Keep'){ const a=keepStart,b=pos(e); // live box overlay
+    render(); vctx.strokeStyle='#1ff0ff'; vctx.lineWidth=2; vctx.strokeRect(Math.min(a.x,b.x),Math.min(a.y,b.y),Math.abs(b.x-a.x),Math.abs(b.y-a.y));
+  } else { paint(pos(e)); refreshMaskData(); render(); } }
+function up(e){ if(!drawing)return; drawing=false;
+  if(tool==='Keep'){ const a=keepStart,b=pos(e); mctx.fillStyle='#000'; mctx.fillRect(0,0,pw,ph);
+    mctx.fillStyle='#fff'; mctx.fillRect(Math.min(a.x,b.x),Math.min(a.y,b.y),Math.abs(b.x-a.x),Math.abs(b.y-a.y));
+    refreshMaskData(); render(); } }
+view.addEventListener('mousedown',down); view.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+view.addEventListener('touchstart',down,{passive:false}); view.addEventListener('touchmove',move,{passive:false}); view.addEventListener('touchend',up);
+
+// ---- save / reset ----
+function maskBlob(){ return new Promise(res=>mask.toBlob(res,'image/png')); }
+$('save').onclick=async()=>{
+  if(!cur)return; $('status').textContent='applying to all frames…';
+  const fd=new FormData(); fd.append('reel',cur.reel);
+  fd.append('tighten',$('tighten').value); fd.append('choke',$('choke').value); fd.append('feather',$('feather').value);
+  fd.append('mask', await maskBlob(), 'mask.png');
+  try{ const j=await (await fetch('/api/cleanup/apply',{method:'POST',body:fd})).json();
+    $('status').textContent='✓ saved — cleaned '+j.frames+' frames. Reloading…';
+    // reload frames (cache-bust)
+    cur.frames=cur.frames; await reloadFrames();
+  }catch(e){ $('status').textContent='error: '+e; }
+};
+$('reset').onclick=async()=>{
+  if(!cur)return; if(!confirm('Restore the original cutout for '+cur.label+'?'))return;
+  $('status').textContent='restoring…';
+  const fd=new FormData(); fd.append('reel',cur.reel);
+  await fetch('/api/cleanup/reset',{method:'POST',body:fd});
+  mctx.fillStyle='#fff';mctx.fillRect(0,0,pw,ph);refreshMaskData();
+  $('tighten').value=0;$('vTighten').textContent='0';$('choke').value=0;$('vChoke').textContent='0';buildLut();
+  await reloadFrames(); $('status').textContent='✓ restored to original.';
+};
+async function reloadFrames(){
+  imgs=await Promise.all(cur.frames.map(p=>new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src='/api/media?path='+encodeURIComponent(p)+'&t='+Date.now();})));
+  imgs=imgs.filter(Boolean); render();
+}
+
+loadReels();
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@
     --muted:#8b97a8;--accent:#e23b3b;--green:#3ddc84;--yellow:#f7c948;--r:12px;}
   *{box-sizing:border-box}
   body{margin:0;font:14px/1.5 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-  header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+  header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;background:var(--bg)}
   header .logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
     background:linear-gradient(145deg,var(--accent),#8c1f1f)}
   header h1{font-size:16px;margin:0;flex:1}
@@ -60,9 +60,43 @@
   .hint{font-size:12px;color:var(--muted)}
   a.dl{display:inline-block;margin-top:10px;background:var(--green);color:#06210f;padding:10px 16px;
     border-radius:9px;text-decoration:none;font-weight:600}
+  /* clean Form Studio layout */
+  .main{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .srcgrid{display:flex;gap:8px;flex-wrap:wrap}
+  .srcgrid select{flex:1;min-width:130px;background:#0d131b;border:1px solid var(--line);color:var(--ink);
+    border-radius:9px;padding:9px 10px}
+  .srcfoot{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .linkbtn{background:none;border:0;color:#5aa7ff;font-size:12.5px;text-decoration:underline;padding:0;margin-left:auto}
+  .advpath{display:none;gap:8px;margin-top:10px}
+  .advpath.show{display:flex}
+  .advpath input{flex:1;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 11px}
+  .go.green{background:linear-gradient(145deg,#1e9e4a,#0f6b30)}
+  .inline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .lbl{font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+  .lbl select,.lbl input[type=number]{background:#0d131b;border:1px solid var(--line);color:var(--ink);
+    border-radius:7px;padding:4px 6px}
+  details.adv{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+  details.adv>summary{cursor:pointer;font-size:13px;color:var(--ink);font-weight:600;list-style:none;padding:3px 0}
+  details.adv>summary::-webkit-details-marker{display:none}
+  details.adv>summary::before{content:"▸ ";color:var(--muted)}
+  details.adv[open]>summary::before{content:"▾ "}
+  .opt{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+  .stat{font-size:12px;color:var(--muted)}
+  hr.sep{border:none;border-top:1px solid var(--line);margin:12px 0}
 </style>
 </head>
 <body>
+<nav id="fsnav" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:7px 12px;background:#0b111c;border-bottom:1px solid #26324a;font:13px system-ui,'Segoe UI',Roboto,sans-serif;position:sticky;top:0;z-index:500">
+<a href="/" style="color:#e8eefc;text-decoration:none;font-weight:800;margin-right:8px">🥊 FightSync</a>
+<a href="/studio" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Form Studio</a>
+<a href="/label" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Labeler</a>
+<a href="/subtitles" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Captions</a>
+<a href="/cleanup" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Cleanup</a>
+<a href="/ninja" style="color:#c9a6ff;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🥷 Ninja Cam</a>
+<a href="/live" style="color:#ff7b7b;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🔴 Live</a>
+<script>document.querySelectorAll('#fsnav a').forEach(function(a){if(a.getAttribute('href')===location.pathname){a.style.background='#1b2740';a.style.color='#fff';}});</script>
+</nav>
 <header>
   <div class="logo">🥊</div>
   <h1>Form Studio</h1>
@@ -70,14 +104,39 @@
 </header>
 
 <div class="wrap">
-  <div>
-    <div class="loadbar">
-      <input id="pathIn" placeholder="C:\path\to\synced-clip.mp4  (or your exported final.mp4)">
-      <button class="btn" id="loadBtn">Load</button>
+  <div class="main">
+    <!-- ① SOURCE -->
+    <div class="card">
+      <h2>① Source clip</h2>
+      <div class="srcgrid">
+        <select id="roundSel"><option value="">— loading rounds —</option></select>
+        <select id="clipSel">
+          <option value="facecam">Webcam (your body)</option>
+          <option value="cam2">Phone cam</option>
+          <option value="gameplay">Gameplay</option>
+          <option value="directed">🎬 Directed (synced webcam + phone cut)</option>
+          <option value="multiview">🎯 Multi-view punch types (webcam + phone fused)</option>
+        </select>
+        <button class="btn" id="loadRoundBtn">Load</button>
+      </div>
+      <div class="srcfoot">
+        <button class="btn" id="saveProgBtn" title="Remember this round's tracked result so you can reopen it later without re-tracking">💾 Save progress</button>
+        <span class="stat" id="progStatus"></span>
+        <button class="linkbtn" id="advToggle">paste a file path…</button>
+        <a class="linkbtn" href="/label" title="Tap your real punches on a clip — teaches FightSync your style so stat tracking gets accurate" style="margin-left:auto">🥊 Label punches →</a>
+      </div>
+      <div class="advpath" id="advPath">
+        <input id="pathIn" placeholder="C:\path\to\clip.mp4  (or an exported final.mp4)">
+        <button class="btn" id="loadBtn">Load path</button>
+      </div>
     </div>
+
+    <!-- STAGE -->
     <div class="stage" id="stage">
       <video id="vid" preload="auto"></video>
-      <canvas id="ov"></canvas>
+      <canvas id="ov" style="pointer-events:none"></canvas>
+      <img id="livePreview" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none;z-index:5">
+      <div id="livePvTag" style="position:absolute;top:8px;right:10px;display:none;z-index:6;background:rgba(226,59,59,.92);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 9px;border-radius:6px">● TRACKING</div>
     </div>
     <div class="transport">
       <button class="btn" id="playBtn">▶</button>
@@ -86,54 +145,69 @@
       <input type="range" id="seek" min="0" max="1000" value="0">
       <span class="time" id="tlabel">0:00.0 / 0:00.0</span>
     </div>
-    <div class="hint" style="margin-top:8px">Pick a tool, then draw on the video. Circle/Zone:
-      drag. Arrow: drag tail→head. Polygon: click points, double-click to close. Text: click.
-      Select a marker to move it or track its motion.</div>
+
+    <!-- shared status (any action reports here) -->
+    <div class="prog" id="prog"><i id="bar"></i></div>
+    <div class="pmsg" id="pmsg"></div>
+    <div id="dlwrap"></div>
   </div>
 
   <div class="side">
+    <!-- ② TRACK -->
     <div class="card">
-      <h2>Tools</h2>
-      <div class="tools" id="tools">
-        <button data-tool="select" class="on">Select</button>
-        <button data-tool="circle">● Circle</button>
-        <button data-tool="zone">▭ Zone</button>
-        <button data-tool="poly">⬡ Polygon</button>
-        <button data-tool="arrow">↗ Arrow</button>
-        <button data-tool="text">T Text</button>
+      <h2>② Track your body</h2>
+      <button class="go green" id="gpuPoseBtn" title="SOTA GPU body tracking on your RTX 2080 (YOLO11-pose) — the smoothest, most joint-accurate skeleton.">⚡ GPU tracking</button>
+      <div class="inline" style="margin-top:10px">
+        <label class="lbl">model
+          <select id="gpuQuality">
+            <option value="fast">fast</option>
+            <option value="balanced" selected>balanced</option>
+            <option value="accurate">accurate</option>
+            <option value="mine">my model</option>
+          </select></label>
+        <label class="lbl">first
+          <input id="poseSecs" type="number" min="0" step="5" placeholder="all" style="width:50px"> sec</label>
+        <label class="lbl" title="freeze + green/red highlight on real good/bad-form punches"><input type="checkbox" id="gpuCues" checked> form cues</label>
       </div>
-      <div class="swatches" id="swatches">
-        <div class="sw on" data-color="red" style="background:#e23b3b"></div>
-        <div class="sw" data-color="green" style="background:#3ddc84"></div>
-        <div class="sw" data-color="yellow" style="background:#f7c948"></div>
+      <button class="btn" id="gpuFixBtn" style="display:none;width:100%;margin-top:10px" title="Drag any joint the tracker got wrong, then re-render. Your fixes are banked to fine-tune the model.">✏️ Fix joints</button>
+      <div id="editOps" style="display:none;margin-top:8px">
+        <span class="stat" id="editFrameLbl">frame —</span>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" id="saveCorrBtn" style="flex:1">💾 Save fixes</button>
+          <button class="btn" id="clearFrameBtn" style="flex:1">↺ Clear frame</button>
+        </div>
+        <button class="go" id="rerenderBtn" style="margin-top:8px">🎬 Re-render with my fixes</button>
       </div>
-      <div class="opts">
-        <label><input type="checkbox" id="pulse" checked> pulse</label>
-        <label>length <input type="number" id="dur" value="3" min="0.3" step="0.5">s</label>
+      <!-- RETIRED CPU MediaPipe coach + its calibrate/train tools (the GPU tracker replaces them) —
+           kept as hidden stubs so old JS handlers don't crash -->
+      <div style="display:none">
+        <button id="poseBtn"></button><input type="checkbox" id="poseHi" checked><input type="checkbox" id="poseHQ">
+        <select id="poseStance"><option value="auto">auto</option></select>
+        <button id="calibBtn"></button><span id="calibStatus"></span>
+        <button id="refsBtn"></button><span id="refsStatus"></span>
+        <button id="trainBtn"></button><div id="trainList"></div><button id="learnBtn"></button>
+        <button id="editBtn"></button>
       </div>
     </div>
 
+    <!-- ③ FINE-TUNE (optional, advanced) -->
     <div class="card">
-      <h2>Markers</h2>
+      <h2>③ Fine-tune <span class="opt">optional</span></h2>
+      <div class="hint" style="margin-bottom:8px">Once you've corrected joints on a few clips (<b>✏️ Fix joints → Re-render</b>), you can train the tracker on <i>your</i> footage. Modest gain — needs ~12+ corrected frames.</div>
+      <button class="btn" id="gpuFinetuneBtn" style="width:100%" title="Train YOLO11-pose on the frames you've corrected.">⚙ Fine-tune on my fixes</button>
+      <div class="stat" id="ftStatus" style="margin-top:6px"></div>
+    </div>
+
+    <!-- hidden legacy stub (old shape/marker tools — kept so old JS hooks don't break) -->
+    <div class="card" style="display:none">
+      <div class="tools" id="tools"><button data-tool="select" class="on">Select</button></div>
+      <div class="swatches" id="swatches"><div class="sw on" data-color="red"></div></div>
+      <div class="opts"><input type="checkbox" id="pulse" checked><input type="number" id="dur" value="3"></div>
       <div class="mlist" id="mlist"></div>
       <div class="selops" id="selops" style="display:none">
-        <button id="setIn">Set in = now</button>
-        <button id="setOut">Set out = now</button>
-        <button id="trackBtn">◎ Track motion</button>
-        <button id="untrackBtn">untrack</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Export</h2>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="btn" id="saveBtn" style="flex:1">Save project</button>
-        <button class="btn" id="loadProjBtn" style="flex:1">Load</button>
-      </div>
-      <button class="go" id="burnBtn">Burn in &amp; export</button>
-      <div class="prog" id="prog"><i id="bar"></i></div>
-      <div class="pmsg" id="pmsg"></div>
-      <div id="dlwrap"></div>
+        <button id="setIn"></button><button id="setOut"></button>
+        <button id="trackBtn"></button><button id="untrackBtn"></button></div>
+      <button id="saveBtn"></button><button id="loadProjBtn"></button><button id="burnBtn"></button>
     </div>
   </div>
 </div>
@@ -146,16 +220,100 @@ const vid=$("vid"), ov=$("ov"), ctx=ov.getContext("2d");
 let draft=null, dragStart=null, poly={active:false,pts:[]}, moving=null, mouse=[0,0];
 
 // ── load ────────────────────────────────────────────────────────────────
+// load a 480p proxy (built per `params`) into the preview, then fall back to the raw file on error.
+function _proxyLoad(orig, params, building, ready){
+  $("pmsg").textContent=building; const want=orig;
+  fetch("/api/proxy",{method:"POST",body:new URLSearchParams(params)})
+    .then(r=>r.json()).then(({job_id})=>{
+      const t=setInterval(async()=>{
+        if(state.base!==want){ clearInterval(t); return; }      // user switched clips → abandon
+        let s; try{ s=await(await fetch("/api/status/"+job_id)).json(); }catch(_){ return; }
+        if(s.status==="done"){ clearInterval(t); vid.src="/api/media?path="+encodeURIComponent(s.result.path); vid.load(); $("pmsg").textContent=ready; }
+        else if(s.status==="error"){ clearInterval(t); vid.src="/api/media?path="+encodeURIComponent(orig); vid.load(); $("pmsg").textContent="⚠ preview build failed — showing the full clip (tracking still honors the trim)."; }
+        else $("pmsg").textContent=building+" "+(s.percent||0)+"%";
+      },600);
+    }).catch(()=>{ vid.src="/api/media?path="+encodeURIComponent(orig); vid.load(); });
+}
 function loadVideo(path){
   if(!path) return;
-  state.base=path;
-  vid.src="/api/media?path="+encodeURIComponent(path);
-  vid.load();
+  state.base=path;                                   // GPU tracking still honors the round's trim (start/dur)
+  vid.removeAttribute("src");
+  if(/\.mov$/i.test(path)){
+    // browsers can't decode iPhone .mov (HEVC/10-bit) → a 480p H.264 proxy (the only time we transcode)
+    _proxyLoad(path, {path:path, seconds:"0"},
+               "Building a phone-cam preview (HEVC → H.264)…", "Phone-cam preview ready.");
+  } else {
+    vid.src="/api/media?path="+encodeURIComponent(path); vid.load();   // load the raw clip INSTANTLY
+  }
 }
-$("loadBtn").onclick=()=>loadVideo($("pathIn").value.trim());
+$("loadBtn").onclick=()=>{ studioWin=null; studioDirected=false; loadVideo($("pathIn").value.trim()); };  // pasted clip → track whole
 $("pathIn").addEventListener("keydown",e=>{ if(e.key==="Enter") $("loadBtn").click(); });
+$("advToggle").onclick=()=>$("advPath").classList.toggle("show");
+
+// ── Source: pick a ROUND from the saved session (no path pasting) ───────────
+let roundsData=[], studioRound=null, studioSource="", studioWin=null, studioDirected=false, studioMultiview=false;
+function roundClip(r,which){ const rd=roundsData.find(x=>String(x.round)===String(r));
+  return rd ? (rd[which]||rd.facecam||rd.gameplay||"") : ""; }
+function roundWin(r,which){ const rd=roundsData.find(x=>String(x.round)===String(r));
+  if(!rd || !rd.out_dur) return null;                  // trimmed window so GPU skips the dead air
+  const start = which==="gameplay" ? rd.gs : which==="cam2" ? 0 : rd.fs;
+  return {start: +(start||0), dur: +rd.out_dur}; }
+async function loadRounds(){
+  try{
+    const d=await(await fetch("/api/studio/rounds")).json();
+    roundsData=d.rounds||[]; const prog=d.progress||{};
+    const sel=$("roundSel"); sel.innerHTML="";
+    if(!roundsData.length){ sel.appendChild(new Option("no synced rounds — sync clips in FightSync first",""));
+      $("advPath").classList.add("show"); return; }
+    sel.appendChild(new Option("— pick a round —",""));
+    roundsData.forEach(r=>{ sel.appendChild(new Option("Round "+r.round+(prog[String(r.round)]?"  ✓ saved":""), String(r.round))); });
+  }catch(e){ $("progStatus").textContent="(couldn't load rounds)"; $("advPath").classList.add("show"); }
+}
+async function openRound(){
+  const r=$("roundSel").value; if(!r) return; studioRound=+r;
+  const d=await(await fetch("/api/studio/rounds")).json(); const p=(d.progress||{})[r];
+  const which=$("clipSel").value;
+  // Reopen the saved tracked result ONLY for the plain single-clip modes. A Directed / Multi-view view must
+  // be (re)BUILT by GPU-tracking, so those ALWAYS fall through to pickClip (which prompts you to track) even
+  // if a plain webcam track was saved earlier — otherwise selecting "Directed" silently shows the old webcam.
+  if(p && p.tracked && which!=="directed" && which!=="multiview"){
+    studioSource=p.clip||""; studioWin=null; studioDirected=false; studioMultiview=false; loadVideo(p.tracked); gpuKpts=p.kpts||null;
+    if(gpuKpts) $("gpuFixBtn").style.display="";
+    $("progStatus").textContent="✓ reopened saved progress · round "+r;
+  } else { pickClip(r, which); }
+}
+// load a round's chosen source into the preview ("directed" = the synced webcam+phone cut, built when you track)
+function pickClip(r, which){
+  studioDirected = (which==="directed");
+  studioMultiview = (which==="multiview");
+  const useFace = studioDirected || studioMultiview;     // both preview the webcam; phone is fused/cut at track time
+  const c=useFace ? roundClip(r,"facecam") : roundClip(r,which);
+  studioSource=c; studioWin=roundWin(r, useFace?"facecam":which);
+  if(studioMultiview){
+    if(c) loadVideo(c);
+    $("progStatus").textContent="round "+r+" · 🎯 Multi-view — this preview is the webcam. Click ⚡ GPU tracking to fuse BOTH angles at each punch.";
+  } else if(studioDirected){
+    if(c) loadVideo(c);   // preview the webcam as a stand-in; the cut feed is built at track time
+    $("progStatus").textContent="round "+r+" · 🎬 Directed — this preview is the webcam. Click ⚡ GPU tracking to BUILD the webcam↔phone cut (that becomes the round's tracked clip).";
+  } else if(c){ loadVideo(c);
+    $("progStatus").textContent="round "+r+" · "+which+(studioWin&&studioWin.start>0?" (trimmed — tracking the kept part)":"");
+  } else $("progStatus").textContent="round "+r+" has no "+which+" clip";
+}
+$("loadRoundBtn").onclick=openRound;
+$("roundSel").onchange=openRound;
+$("clipSel").onchange=()=>{ const r=$("roundSel").value; if(!r) return; studioRound=+r; pickClip(r, $("clipSel").value); };
+$("saveProgBtn").onclick=async()=>{
+  if(studioRound==null){ $("progStatus").textContent="pick a round first"; return; }
+  const tracked=(state.base && state.base!==studioSource) ? state.base : "";   // a tracked result, if any
+  const fd=new FormData(); fd.append("round",studioRound); fd.append("clip",studioSource||"");
+  fd.append("tracked",tracked); fd.append("kpts",gpuKpts||"");
+  await fetch("/api/studio/save_progress",{method:"POST",body:fd});
+  $("progStatus").textContent=tracked?("✓ saved tracked result · round "+studioRound):("✓ saved round "+studioRound);
+  loadRounds();
+};
+loadRounds();
 { const q=new URLSearchParams(location.search).get("path");
-  if(q){ $("pathIn").value=q; loadVideo(q); } }
+  if(q){ $("pathIn").value=q; $("advPath").classList.add("show"); loadVideo(q); } }
 
 vid.addEventListener("loadedmetadata",()=>{ resize(); draw(); updateTime(); });
 function resize(){ ov.width=ov.clientWidth; ov.height=ov.clientHeight; }
@@ -242,6 +400,7 @@ function draw(){
     ctx.beginPath(); poly.pts.forEach((p,i)=>{ const X=p[0]*W,Y=p[1]*H; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
     ctx.stroke(); }
   if(draft) draft();
+  if(window.editPaint) window.editPaint();   // skeleton editor overlay (when active)
 }
 (function loop(){ draw(); requestAnimationFrame(loop); })();
 
@@ -371,8 +530,317 @@ $("burnBtn").onclick=async()=>{
   },1000);
 };
 
+// 🤸 AI body tracking + form cues — the reliable replacement for the shape tracker
+$("poseBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a clip first (paste its path and hit Load)."); return; }
+  $("poseBtn").disabled=true; $("prog").classList.add("show"); $("dlwrap").innerHTML="";
+  $("bar").style.width="0%"; $("pmsg").textContent="Starting body tracking… (a long clip takes a few minutes)";
+  try{
+    const fd=new FormData(); fd.append("path",state.base);
+    const secs=parseFloat($("poseSecs").value); if(secs>0) fd.append("seconds",secs);
+    fd.append("quality", $("poseHQ").checked ? "full" : "lite");
+    fd.append("highlights", $("poseHi").checked ? 1 : 0);
+    fd.append("stance", $("poseStance").value);
+    const r=await fetch("/api/studio/pose",{method:"POST",body:fd});
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,200); $("poseBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    const t=setInterval(async()=>{
+      const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.status==="done"){ clearInterval(t); $("poseBtn").disabled=false;
+        const f=s.result&&s.result.final;
+        if(f) loadVideo(f);                      // play the tracked result right here
+        $("pmsg").textContent="✓ Body tracked — "+((s.result&&s.result.summary)||"");
+        $("dlwrap").innerHTML=`<a class="dl" href="/api/download/${job_id}" download="form_coach.mp4">⬇ Download tracked MP4</a>`; }
+      else if(s.status==="error"){ clearInterval(t); $("poseBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; }
+    },1500);
+  }catch(e){ $("poseBtn").disabled=false; $("pmsg").textContent="⚠ "+e; }
+};
+$("gpuPoseBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a clip first (paste its path and hit Load)."); return; }
+  $("gpuPoseBtn").disabled=true; $("prog").classList.add("show"); $("dlwrap").innerHTML="";
+  $("bar").style.width="0%"; $("pmsg").textContent="Starting GPU tracking on your RTX 2080… (first run downloads the model)";
+  const srcClip=state.base;                              // the ORIGINAL clip — edit Fix-joints over this, not the overlay
+  function hidePreview(){ $("livePreview").style.display="none"; $("livePvTag").style.display="none"; }
+  try{
+    let r;
+    if(studioMultiview){                                  // pose phone, then fuse BOTH cams at each punch
+      if(studioRound==null){ $("pmsg").textContent="⚠ pick a round first"; $("gpuPoseBtn").disabled=false; return; }
+      const fd=new FormData(); fd.append("round", studioRound);
+      fd.append("quality", $("gpuQuality").value); fd.append("cues", $("gpuCues").checked ? 1 : 0);
+      $("pmsg").textContent="Tracking the phone angle, then fusing both cams at each punch…";
+      r=await fetch("/api/studio/multiview_pose",{method:"POST",body:fd});
+    } else if(studioDirected){                            // build + track the synced webcam+phone cut
+      if(studioRound==null){ $("pmsg").textContent="⚠ pick a round first"; $("gpuPoseBtn").disabled=false; return; }
+      const fd=new FormData(); fd.append("round", studioRound);
+      fd.append("quality", $("gpuQuality").value); fd.append("cues", $("gpuCues").checked ? 1 : 0);
+      $("pmsg").textContent="Building the directed feed (webcam + phone cut), then GPU tracking…";
+      r=await fetch("/api/studio/directed_pose",{method:"POST",body:fd});
+    } else {
+      const fd=new FormData(); fd.append("path",state.base);
+      const secs=parseFloat($("poseSecs").value);
+      if(studioWin){ fd.append("start", studioWin.start); fd.append("seconds", secs>0?secs:studioWin.dur); }
+      else if(secs>0){ fd.append("seconds",secs); }       // pasted clip → track from 0
+      fd.append("quality", $("gpuQuality").value);
+      fd.append("cues", $("gpuCues").checked ? 1 : 0);
+      r=await fetch("/api/studio/gpu_pose",{method:"POST",body:fd});
+    }
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,200); $("gpuPoseBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    let pvOk=false;
+    const t=setInterval(async()=>{
+      const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.preview && s.status==="running"){          // LIVE preview — skeleton drawing as it processes
+        const im=new Image();
+        im.onload=()=>{ $("livePreview").src=im.src; if(!pvOk){ pvOk=true; $("livePreview").style.display="block"; $("livePvTag").style.display="block"; } };
+        im.src="/api/media?path="+encodeURIComponent(s.preview)+"&t="+Date.now();
+      }
+      if(s.status==="done"){ clearInterval(t); $("gpuPoseBtn").disabled=false; hidePreview();
+        const f=s.result&&s.result.final; if(f){ studioWin=null; loadVideo(f); }  // tracked output is ALREADY trimmed — no clamp
+        gpuKpts=(s.result&&s.result.kpts)||null; gpuBase=srcClip;        // for the Fix-joints editor (original clip)
+        if(gpuKpts) $("gpuFixBtn").style.display="";
+        if(studioRound!=null && f){          // AUTO-register this tracked round so the Punch Labeler picks it up (no manual save)
+          const fd2=new FormData(); fd2.append("round",studioRound); fd2.append("clip",studioSource||"");
+          fd2.append("tracked",f); fd2.append("kpts",gpuKpts||"");
+          fetch("/api/studio/save_progress",{method:"POST",body:fd2}); }
+        $("pmsg").textContent=(studioRound!=null && f)
+          ? "✓ GPU-tracked — auto-saved & ready in the Punch Labeler. Use ✏️ Fix joints to correct any."
+          : "✓ GPU-tracked — smooth, joint-accurate skeleton. Use ✏️ Fix joints to correct any.";
+        $("dlwrap").innerHTML=`<a class="dl" href="/api/download/${job_id}" download="gpu_tracked.mp4">⬇ Download GPU-tracked MP4</a>`; }
+      else if(s.status==="error"){ clearInterval(t); $("gpuPoseBtn").disabled=false; hidePreview(); $("pmsg").textContent="⚠ "+s.message; }
+    },800);
+  }catch(e){ $("gpuPoseBtn").disabled=false; hidePreview(); $("pmsg").textContent="⚠ "+e; }
+};
+// ✏️ Fix joints — load the GPU keypoints into the existing skeleton editor (drag dots to correct)
+let gpuKpts=null, gpuBase=null;
+$("gpuFixBtn").onclick=async()=>{
+  if(!gpuKpts){ alert("Run ⚡ GPU tracking first."); return; }
+  $("pmsg").textContent="Loading the GPU skeleton to edit…";
+  try{
+    const k=await(await fetch("/api/media?path="+encodeURIComponent(gpuKpts)+"&t="+Date.now())).json();
+    const W=k.w||1, H=k.h||1;
+    edit.data={ fps:k.fps, w:W, h:H, conn:k.edges,
+      frames:(k.frames||[]).map(fr=> fr ? fr.map(p=>[p[0]/W, p[1]/H, p[2]]) : null) };
+    edit.corr={}; edit.gpu={meta:k, W, H, base:gpuBase};
+    if(gpuBase) loadVideo(gpuBase);                 // edit over the ORIGINAL clip, not the overlay
+    ov.style.pointerEvents="auto"; ov.style.cursor="grab"; vid.pause();
+    $("editOps").style.display=""; window.editPaint=paintSkeleton;
+    $("pmsg").textContent="Editing the GPU skeleton — step frames with ⟨ ⟩, DRAG any dot to fix it (yellow = fixed), then ↻ Re-render.";
+  }catch(e){ $("pmsg").textContent="⚠ couldn't load keypoints: "+e; }
+};
+// ⚙ Fine-tune — train YOLO11-pose on the frames you've corrected (the "train on my clips" path)
+async function refreshFt(){ try{ const s=await(await fetch("/api/studio/finetune_status")).json();
+  $("ftStatus").textContent = s.frames ? (s.frames+" fix frame(s) banked"+(s.has_model?" · your model ready":"")) : "";
+}catch(_){} }
+refreshFt();
+$("gpuFinetuneBtn").onclick=async()=>{
+  $("gpuFinetuneBtn").disabled=true; $("prog").classList.add("show"); $("bar").style.width="0%";
+  $("pmsg").textContent="Starting fine-tune on your corrected frames… (training takes a while)";
+  try{ const r=await fetch("/api/studio/gpu_finetune",{method:"POST"});
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,200); $("gpuFinetuneBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    const t=setInterval(async()=>{ const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.status==="done"){ clearInterval(t); $("gpuFinetuneBtn").disabled=false; refreshFt();
+        $("pmsg").textContent="✓ "+(s.message||"Fine-tuned — pick 'my model' in GPU tracking."); }
+      else if(s.status==="error"){ clearInterval(t); $("gpuFinetuneBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; } },2500);
+  }catch(e){ $("gpuFinetuneBtn").disabled=false; $("pmsg").textContent="⚠ "+e; }
+};
+
+// 📏 per-body calibration — measure YOUR guard/stance/reach so cues judge you
+function showProfile(p){
+  const el=$("calibStatus");
+  if(p) el.innerHTML="✓ calibrated (guard "+p.guard_dy+", stance "+p.stance+", reach "+p.reach+")";
+  else el.textContent="not calibrated";
+}
+fetch("/api/studio/profile").then(r=>r.json()).then(j=>showProfile(j.profile)).catch(()=>{});
+$("calibBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a clip of yourself boxing first, then Calibrate."); return; }
+  $("calibBtn").disabled=true; $("prog").classList.add("show"); $("dlwrap").innerHTML="";
+  $("bar").style.width="0%"; $("pmsg").textContent="Measuring your proportions…";
+  try{
+    const fd=new FormData(); fd.append("path",state.base);
+    const secs=parseFloat($("poseSecs").value); if(secs>0) fd.append("seconds",secs);
+    const r=await fetch("/api/studio/calibrate",{method:"POST",body:fd});
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,200); $("calibBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    const t=setInterval(async()=>{
+      const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.status==="done"){ clearInterval(t); $("calibBtn").disabled=false;
+        showProfile(s.result&&s.result.profile);
+        $("pmsg").textContent="✓ Calibrated to you — now run 🤸 Auto-track and cues judge against YOU."; }
+      else if(s.status==="error"){ clearInterval(t); $("calibBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; }
+    },1200);
+  }catch(e){ $("calibBtn").disabled=false; $("pmsg").textContent="⚠ "+e; }
+};
+
+// 🥊 reference punches — capture your best, then punches get graded "% of best"
+function showReps(r){
+  const el=$("refsStatus");
+  if(r && Object.keys(r).length){ el.innerHTML="✓ refs: "+Object.entries(r).map(([k,v])=>k+" "+Math.round(v.ext*100)+"%").join(", "); }
+  else el.textContent="no refs yet";
+}
+fetch("/api/studio/reps").then(r=>r.json()).then(j=>showReps(j.reps)).catch(()=>{});
+$("refsBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a clip of your best work first, then Save best punches."); return; }
+  $("refsBtn").disabled=true; $("prog").classList.add("show"); $("dlwrap").innerHTML="";
+  $("bar").style.width="0%"; $("pmsg").textContent="Finding your best punches…";
+  try{
+    const fd=new FormData(); fd.append("path",state.base);
+    const secs=parseFloat($("poseSecs").value); if(secs>0) fd.append("seconds",secs);
+    const r=await fetch("/api/studio/refs",{method:"POST",body:fd});
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,200); $("refsBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    const t=setInterval(async()=>{
+      const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.status==="done"){ clearInterval(t); $("refsBtn").disabled=false;
+        showReps(s.result&&s.result.reps);
+        $("pmsg").textContent="✓ Saved your best punches — now 🤸 Auto-track grades each punch vs your best."; }
+      else if(s.status==="error"){ clearInterval(t); $("refsBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; }
+    },1200);
+  }catch(e){ $("refsBtn").disabled=false; $("pmsg").textContent="⚠ "+e; }
+};
+
+// 🥊 PUNCH TRAINER — teach it which arm-extensions are YOUR punches
+let trainCands=[];
+$("trainBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a clip of you boxing first, then Find punches."); return; }
+  $("trainBtn").disabled=true; $("prog").classList.add("show"); $("bar").style.width="0%";
+  $("trainList").innerHTML=""; $("learnBtn").style.display="none"; $("pmsg").textContent="Finding arm-extensions…";
+  try{
+    const fd=new FormData(); fd.append("path",state.base);
+    const ps=$("poseSecs"); const secs=ps?parseFloat(ps.value):0; if(secs>0) fd.append("seconds",secs);
+    const r=await fetch("/api/studio/punch_candidates",{method:"POST",body:fd});
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,160); $("trainBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    const t=setInterval(async()=>{
+      const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.status==="done"){ clearInterval(t); $("trainBtn").disabled=false;
+        trainCands=(s.result&&s.result.candidates)||[]; renderTrain();
+        $("pmsg").textContent="Found "+trainCands.length+" — ▶ jump to check each, UNCHECK the ones that aren't punches, then Learn."; }
+      else if(s.status==="error"){ clearInterval(t); $("trainBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; }
+    },1200);
+  }catch(e){ $("trainBtn").disabled=false; $("pmsg").textContent="⚠ "+e; }
+};
+function renderTrain(){
+  const el=$("trainList"); el.innerHTML="";
+  trainCands.forEach((c,i)=>{
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1a2330";
+    row.innerHTML=`<input type="checkbox" checked data-i="${i}">`+
+      `<a href="#" data-jump="${c.t}" style="color:#7fb0ff;text-decoration:none">▶ ${c.t.toFixed(1)}s</a>`+
+      `<span class="time" style="opacity:.75">${c.side} · ext ${Math.round(c.ext*100)}% · speed ${c.speed.toFixed(1)}</span>`;
+    el.appendChild(row);
+  });
+  el.querySelectorAll("[data-jump]").forEach(a=>a.addEventListener("click",e=>{ e.preventDefault();
+    if(vid.duration){ vid.currentTime=Math.max(0,parseFloat(a.dataset.jump)-0.3); vid.pause(); } }));
+  $("learnBtn").style.display = trainCands.length ? "" : "none";
+}
+$("learnBtn").onclick=async()=>{
+  const kept=[];
+  $("trainList").querySelectorAll("input[type=checkbox]").forEach(cb=>{ if(cb.checked) kept.push(trainCands[+cb.dataset.i]); });
+  if(kept.length<2){ alert("Keep at least 2 real punches checked so it can learn your range."); return; }
+  const minExt=Math.min(...kept.map(c=>c.ext))-0.01;
+  const minSpeed=Math.max(0,Math.min(...kept.map(c=>c.speed))-0.1);
+  const fd=new FormData(); fd.append("min_ext",minExt); fd.append("min_speed",minSpeed); fd.append("n",kept.length);
+  await fetch("/api/studio/save_punch_profile",{method:"POST",body:fd});
+  $("pmsg").textContent=`✓ Learned your punch style from ${kept.length} punches (min ext ${Math.round(minExt*100)}%, min speed ${minSpeed.toFixed(1)}). Now 🤸 Auto-track counts your way.`;
+};
+
+// ✏️ SKELETON EDITOR — pause on a frame and drag joints to correct them (rotoscoping)
+const edit={data:null, corr:{}, drag:null, gpu:null};
+function editFrameIdx(){ return edit.data ? Math.min(edit.data.frames.length-1,
+  Math.max(0, Math.round((vid.currentTime||0)*edit.data.fps))) : -1; }
+function jXY(fi,i){ const c=edit.corr[fi]; if(c && c[i]) return c[i];
+  const fr=edit.data.frames[fi]; return fr ? [fr[i][0],fr[i][1]] : null; }
+// painted from inside the main draw() loop (canvas already cleared each frame)
+function paintSkeleton(){
+  if(!edit.data) return; const W=ov.width,H=ov.height;
+  const fi=editFrameIdx(); const fr=edit.data.frames[fi];
+  const lbl=$("editFrameLbl"); if(lbl) lbl.textContent="frame "+(fi>=0?fi:"—")+(fr?"":" (no pose this frame)");
+  if(!fr) return;
+  ctx.strokeStyle="#3ddc84"; ctx.lineWidth=3;
+  edit.data.conn.forEach(([a,b])=>{ const pa=jXY(fi,a),pb=jXY(fi,b);
+    if(pa&&pb){ ctx.beginPath(); ctx.moveTo(pa[0]*W,pa[1]*H); ctx.lineTo(pb[0]*W,pb[1]*H); ctx.stroke(); } });
+  for(let i=0;i<fr.length;i++){ const p=jXY(fi,i); if(!p) continue;
+    const fixed=edit.corr[fi]&&edit.corr[fi][i];
+    ctx.fillStyle=fixed?"#ffd23f":"#36a3ff"; ctx.beginPath(); ctx.arc(p[0]*W,p[1]*H,fixed?7:5,0,7); ctx.fill();
+    ctx.strokeStyle="#0b1422"; ctx.lineWidth=1.5; ctx.stroke(); }
+}
+ov.addEventListener("pointerdown",e=>{ if(!edit.data) return; const [nx,ny]=nm(e); const fi=editFrameIdx();
+  if(!edit.data.frames[fi]) return; let best=-1,bd=0.05;
+  for(let i=0;i<edit.data.frames[fi].length;i++){ const p=jXY(fi,i); if(!p) continue;
+    const d=Math.hypot(p[0]-nx,p[1]-ny); if(d<bd){bd=d;best=i;} }
+  if(best>=0){ edit.drag={fi,i:best}; ov.style.cursor="grabbing"; try{ov.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault(); } });
+ov.addEventListener("pointermove",e=>{ if(!edit.drag) return; const [nx,ny]=nm(e);
+  (edit.corr[edit.drag.fi]=edit.corr[edit.drag.fi]||{})[edit.drag.i]=[+nx.toFixed(4),+ny.toFixed(4)]; });
+ov.addEventListener("pointerup",()=>{ edit.drag=null; ov.style.cursor="grab"; });
+
+$("editBtn").onclick=async()=>{
+  if(!state.base){ alert("Load a clip first."); return; }
+  $("editBtn").disabled=true; $("prog").classList.add("show"); $("bar").style.width="0%";
+  $("pmsg").textContent="Reading the skeleton…"; $("editOps").style.display="none";
+  try{
+    const fd=new FormData(); fd.append("path",state.base);
+    const ps=$("poseSecs"); const secs=ps?parseFloat(ps.value):0; if(secs>0) fd.append("seconds",secs);
+    const r=await fetch("/api/studio/pose_data",{method:"POST",body:fd});
+    if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,160); $("editBtn").disabled=false; return; }
+    const {job_id}=await r.json();
+    const t=setInterval(async()=>{
+      const s=await(await fetch("/api/status/"+job_id)).json();
+      $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+      if(s.status==="done"){ clearInterval(t); $("editBtn").disabled=false;
+        edit.data=await(await fetch("/api/media?path="+encodeURIComponent(s.result.data_path))).json();
+        edit.corr={}; const cj=await(await fetch("/api/studio/corrections")).json();
+        Object.entries(cj.corrections||{}).forEach(([k,v])=>{ edit.corr[+k]=v; });
+        ov.style.pointerEvents="auto"; ov.style.cursor="grab"; vid.pause();
+        $("editOps").style.display=""; window.editPaint=paintSkeleton;
+        $("pmsg").textContent="Editing on — step frames with ⟨ ⟩, DRAG any dot to fix it (yellow = fixed)."; }
+      else if(s.status==="error"){ clearInterval(t); $("editBtn").disabled=false; $("pmsg").textContent="⚠ "+s.message; }
+    },1000);
+  }catch(e){ $("editBtn").disabled=false; $("pmsg").textContent="⚠ "+e; }
+};
+$("clearFrameBtn").onclick=()=>{ const fi=editFrameIdx(); delete edit.corr[fi]; };
+async function saveCorr(){ if(edit.gpu) return; const fd=new FormData(); fd.append("corrections",JSON.stringify(edit.corr));
+  await fetch("/api/studio/save_corrections",{method:"POST",body:fd}); }
+$("saveCorrBtn").onclick=async()=>{
+  if(edit.gpu){ $("pmsg").textContent="For GPU fixes, hit ↻ Re-render to bake them in (and collect them for fine-tuning)."; return; }
+  await saveCorr(); $("pmsg").textContent="✓ Saved "+Object.keys(edit.corr).length+" fixed frame(s)."; };
+$("rerenderBtn").onclick=async()=>{
+  if(edit.gpu){                                   // GPU path — bake corrected keypoints, no re-inference
+    const g=edit.gpu, W=g.W, H=g.H;
+    const frames=(edit.data.frames||[]).map((fr,fi)=>{ if(!fr) return null; const c=edit.corr[fi]||{};
+      return fr.map((p,i)=> c[i] ? [c[i][0]*W, c[i][1]*H, 1.0] : [p[0]*W, p[1]*H, p[2]]); });
+    const corrected=Object.assign({}, g.meta, {frames}); const base=g.base;
+    const nfix=Object.keys(edit.corr).length;
+    window.editPaint=null; ov.style.pointerEvents="none"; edit.data=null; edit.gpu=null; $("editOps").style.display="none";
+    const fd=new FormData(); fd.append("path", base||state.base);
+    fd.append("kpts", new Blob([JSON.stringify(corrected)],{type:"application/json"}), "corrected.kpts.json");
+    fd.append("fixes", nfix);
+    fd.append("corr_frames", JSON.stringify(Object.keys(edit.corr).map(Number)));  // these frames become training labels
+    $("pmsg").textContent="Re-rendering with your "+nfix+" joint fix(es)…"; $("prog").classList.add("show"); $("bar").style.width="0%";
+    try{ const r=await fetch("/api/studio/gpu_redraw",{method:"POST",body:fd});
+      if(!r.ok){ $("pmsg").textContent="⚠ "+(await r.text()).slice(0,160); return; }
+      const {job_id}=await r.json();
+      const t=setInterval(async()=>{ const s=await(await fetch("/api/status/"+job_id)).json();
+        $("bar").style.width=(s.percent||0)+"%"; $("pmsg").textContent=s.message||"";
+        if(s.status==="done"){ clearInterval(t); if(s.result&&s.result.final){ studioWin=null; loadVideo(s.result.final); }
+          gpuKpts=(s.result&&s.result.kpts)||gpuKpts; $("gpuFixBtn").style.display=""; refreshFt();
+          $("pmsg").textContent="✓ Re-rendered with your fixes (banked for fine-tuning)."; }
+        else if(s.status==="error"){ clearInterval(t); $("pmsg").textContent="⚠ "+s.message; } },1000);
+    }catch(e){ $("pmsg").textContent="⚠ "+e; }
+    return;
+  }
+  await saveCorr(); window.editPaint=null; ov.style.pointerEvents="none";
+  edit.data=null; $("editOps").style.display="none"; $("poseBtn").click(); };
+
 // test/debug hook (harmless): lets headless tests inspect editor state
-window._fs={get state(){return state}, addMarker, newMarker, draw};
+window._fs={get state(){return state}, addMarker, newMarker, draw,
+  get edit(){return edit}, paintSkeleton, editFrameIdx, jXY};
 </script>
 </body>
 </html>

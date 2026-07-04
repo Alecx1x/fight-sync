@@ -38,13 +38,18 @@ class SyncResult:
     peak_psr: float = 0.0      # raw peak-to-sidelobe ratio (diagnostic)
 
 
-def _extract_mono(path: str, dst: str) -> np.ndarray:
-    subprocess.run(
-        [FFMPEG, "-y", "-hide_banner", "-loglevel", "error",
-         "-i", path, "-vn", "-ac", "1", "-ar", str(SR),
-         "-acodec", "pcm_s16le", dst],
-        check=True,
-    )
+def _extract_mono(path: str, dst: str,
+                  start: float = 0.0, end: float | None = None) -> np.ndarray:
+    """Decode mono PCM. Optionally only the [start, end] window (seconds) — used to
+    feed auto-sync just the clean part of a clip the user trimmed to."""
+    cmd = [FFMPEG, "-y", "-hide_banner", "-loglevel", "error"]
+    if start and start > 0:
+        cmd += ["-ss", f"{start}"]
+    cmd += ["-i", path]
+    if end is not None and end > start:
+        cmd += ["-t", f"{end - start}"]
+    cmd += ["-vn", "-ac", "1", "-ar", str(SR), "-acodec", "pcm_s16le", dst]
+    subprocess.run(cmd, check=True)
     with wave.open(dst, "rb") as w:
         frames = w.readframes(w.getnframes())
     return np.frombuffer(frames, dtype=np.int16).astype(np.float64)
@@ -88,16 +93,24 @@ def _xcorr_offset(oa: np.ndarray, ob: np.ndarray) -> tuple[int, float]:
     return lag, psr
 
 
-def compute_sync(a_path: str, b_path: str, work: str) -> SyncResult:
-    """a = gameplay, b = facecam. Returns trim points to align them."""
+def compute_sync(a_path: str, b_path: str, work: str,
+                 a_in: float = 0.0, a_out: float | None = None,
+                 b_in: float = 0.0, b_out: float | None = None) -> SyncResult:
+    """a = gameplay, b = facecam. Returns trim points to align them.
+
+    `a_in/a_out`/`b_in/b_out` (seconds) restrict the audio each clip contributes to
+    the correlation — so the user can chop dead air off the ends before auto-sync
+    and only the clean middle is matched. The returned offset is converted back to
+    the FULL-clip timeline, so everything downstream (render) is unaffected."""
     work_p = Path(work)
-    xa = _extract_mono(a_path, str(work_p / "a.wav"))
-    xb = _extract_mono(b_path, str(work_p / "b.wav"))
+    xa = _extract_mono(a_path, str(work_p / "a.wav"), a_in, a_out)
+    xb = _extract_mono(b_path, str(work_p / "b.wav"), b_in, b_out)
     oa = _onset_env(xa)
     ob = _onset_env(xb)
 
     lag, psr = _xcorr_offset(oa, ob)
-    offset = lag / ENV_RATE
+    # the lag is in the TRIMMED frame; shift it back onto the full clips
+    offset = lag / ENV_RATE + (a_in - b_in)
 
     # map peak-to-sidelobe ratio -> 0..1 confidence. A clean lock (one clear
     # shared transient) sits around psr 8-12; pure noise is ~3-5.

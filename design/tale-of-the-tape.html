@@ -1,0 +1,190 @@
+<!-- @dsCard group="Tale of the Tape" name="Gritty Fight Night" subtitle="1280x720 VS intro card — concrete, stencil, blood-red seam, film grain" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tale of the Tape — Gritty Fight Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Ops+One&family=Oswald:wght@500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#d61f24; --red-deep:#7c0d10; --bone:#e9e4d8; --ash:#9a948a;
+    --ink:#0c0b0a; --steel:#1a1816;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Oswald',sans-serif}
+
+  /* ───── the 16:9 card ───── */
+  .card{
+    position:relative;width:1280px;height:720px;overflow:hidden;
+    background:#141210;
+    box-shadow:0 30px 90px rgba(0,0,0,.8);
+    transform-origin:center;
+  }
+  @media(max-width:1320px){ .card{transform:scale(.66)} }
+
+  /* concrete base — layered radial grime + a subtle vignette */
+  .concrete{position:absolute;inset:0;
+    background:
+      radial-gradient(120% 80% at 30% 0%, #2a2622 0%, #1a1714 45%, #0c0a09 100%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,.018) 0 2px, transparent 2px 7px);
+  }
+  .vignette{position:absolute;inset:0;box-shadow:inset 0 0 240px 60px rgba(0,0,0,.85);pointer-events:none}
+
+  /* the two corner panels split by a jagged blood seam */
+  .panel{position:absolute;top:0;bottom:0;width:54%;overflow:hidden}
+  .panel.left{left:0;clip-path:polygon(0 0, 100% 0, 84% 100%, 0 100%)}
+  .panel.right{right:0;clip-path:polygon(16% 0, 100% 0, 100% 100%, 0 100%)}
+  .panel .grime{position:absolute;inset:0;mix-blend-mode:overlay;opacity:.5}
+  .panel.left .tint{position:absolute;inset:0;background:linear-gradient(100deg, rgba(214,31,36,.20), transparent 55%)}
+  .panel.right .tint{position:absolute;inset:0;background:linear-gradient(260deg, rgba(70,120,235,.16), transparent 55%)}
+
+  /* torn paper strip down each panel's inner edge */
+  .torn{position:absolute;top:-2%;height:104%;width:46px;background:var(--ink);
+    filter:url(#tear) drop-shadow(0 0 10px rgba(0,0,0,.7))}
+  .torn.l{left:calc(84% - 30px)}
+  .torn.r{right:calc(84% - 30px)}
+
+  /* the blood-red fracture seam */
+  .seam{position:absolute;top:-6%;left:50%;height:112%;width:7px;transform:translateX(-50%) rotate(8.5deg);
+    background:linear-gradient(var(--red-deep),var(--red),var(--red-deep));
+    box-shadow:0 0 26px 6px rgba(214,31,36,.55),0 0 70px 18px rgba(214,31,36,.28);
+    z-index:6}
+  .splatter{position:absolute;left:50%;top:50%;width:520px;height:520px;transform:translate(-50%,-50%);
+    z-index:5;opacity:.9;pointer-events:none}
+
+  /* ───── header ───── */
+  .title{position:absolute;top:26px;left:50%;transform:translateX(-50%);z-index:8;text-align:center}
+  .title .kicker{font-family:'Black Ops One',cursive;letter-spacing:7px;font-size:30px;color:var(--bone);
+    text-shadow:0 3px 0 #000,0 0 22px rgba(214,31,36,.4)}
+  .title .kicker b{color:var(--red)}
+  .title .rule{height:3px;width:340px;margin:9px auto 0;
+    background:repeating-linear-gradient(90deg,var(--bone) 0 22px,transparent 22px 30px);opacity:.5}
+
+  /* ───── fighter columns ───── */
+  .fighter{position:absolute;top:96px;width:42%;z-index:7;padding:0 40px}
+  .fighter.left{left:0;text-align:left}
+  .fighter.right{right:0;text-align:right}
+  .corner{font-family:'Black Ops One',cursive;font-size:18px;letter-spacing:4px}
+  .left .corner{color:var(--red)} .right .corner{color:#6f93e6}
+  .name{font-family:'Anton',sans-serif;font-size:62px;line-height:.92;color:var(--bone);
+    text-transform:uppercase;letter-spacing:1px;
+    text-shadow:3px 3px 0 #000,0 0 30px rgba(0,0,0,.6);position:relative}
+  .name::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:42%;
+    background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(20,18,16,.35) 3px 4px);
+    mix-blend-mode:multiply;pointer-events:none}            /* worn stencil scratches */
+  .right .name::after{left:0;right:0}
+
+  .portrait{margin-top:14px;height:300px;border:3px solid rgba(233,228,216,.18);
+    background:linear-gradient(180deg,#211d19,#100d0b);position:relative;overflow:hidden;
+    box-shadow:inset 0 0 60px rgba(0,0,0,.7)}
+  .portrait .ph{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;
+    color:#3a342d;font-family:'Special Elite';font-size:15px;letter-spacing:2px;padding-bottom:10px}
+  .portrait .silh{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);
+    width:190px;height:280px;
+    background:radial-gradient(60% 40% at 50% 18%,#2c2722,transparent 70%);
+    clip-path:polygon(38% 0,62% 0,70% 14%,64% 26%,82% 40%,76% 64%,66% 60%,66% 100%,34% 100%,34% 60%,24% 64%,18% 40%,36% 26%,30% 14%)}
+  .left .portrait{border-color:rgba(214,31,36,.4)}
+  .right .portrait{border-color:rgba(111,147,230,.4)}
+
+  /* ───── stat bars ───── */
+  .stats{margin-top:18px}
+  .stat{margin:11px 0}
+  .stat .lab{font-family:'Black Ops One',cursive;font-size:13px;letter-spacing:3px;color:var(--ash)}
+  .stat .val{font-family:'Anton';font-size:30px;color:var(--bone);line-height:1}
+  .bar{height:9px;margin-top:5px;background:rgba(255,255,255,.07);position:relative;overflow:hidden;
+    border:1px solid rgba(0,0,0,.6)}
+  .bar i{position:absolute;top:0;bottom:0;left:0;
+    background:repeating-linear-gradient(90deg,var(--red) 0 9px,var(--red-deep) 9px 12px)}
+  .right .bar i{right:0;left:auto;
+    background:repeating-linear-gradient(90deg,#6f93e6 0 9px,#2a4aa0 9px 12px)}
+  .right .stat{display:flex;flex-direction:column;align-items:flex-end}
+
+  .handle{position:absolute;bottom:24px;font-family:'Special Elite';font-size:16px;color:var(--ash);letter-spacing:2px;z-index:7}
+  .handle.left{left:42px} .handle.right{right:42px}
+
+  /* ───── center VS badge ───── */
+  .vs{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%) rotate(-6deg);z-index:9;
+    width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+  .vs::before{content:"";position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle,#1b1715,#0a0908);
+    border:5px solid var(--bone);
+    box-shadow:0 0 0 4px #000,0 0 40px 8px rgba(214,31,36,.5),inset 0 0 30px rgba(0,0,0,.8)}
+  .vs span{font-family:'Anton';font-size:78px;color:var(--bone);position:relative;
+    text-shadow:0 4px 0 #000,0 0 24px rgba(214,31,36,.7)}
+
+  /* film grain + scratches over everything */
+  .grain{position:absolute;inset:0;z-index:12;opacity:.10;mix-blend-mode:overlay;pointer-events:none}
+  .scratches{position:absolute;inset:0;z-index:11;pointer-events:none;opacity:.5}
+  .frame{position:absolute;inset:0;z-index:13;pointer-events:none;
+    box-shadow:inset 0 0 0 6px rgba(10,9,8,.9),inset 0 0 0 8px rgba(233,228,216,.08)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="concrete"></div>
+
+  <div class="panel left"><div class="tint"></div></div>
+  <div class="panel right"><div class="tint"></div></div>
+
+  <!-- blood splatter at the seam -->
+  <svg class="splatter" viewBox="0 0 200 200">
+    <g fill="#a3161a">
+      <path d="M100 30c14 6 9 26 22 30s26-6 24 12-22 10-20 28 16 24 0 30-22-14-36-10-18 22-30 12-2-26-14-34-30-2-26-20 22-8 22-26-14-24 2-30 26 14 40 8z"/>
+    </g>
+    <g fill="#d61f24"><circle cx="60" cy="50" r="5"/><circle cx="150" cy="70" r="7"/><circle cx="130" cy="150" r="6"/><circle cx="48" cy="140" r="4"/><circle cx="165" cy="120" r="3"/><circle cx="80" cy="170" r="3"/></g>
+  </svg>
+  <div class="torn l"></div><div class="torn r"></div>
+  <div class="seam"></div>
+
+  <div class="title">
+    <div class="kicker">TALE <b>OF</b> THE TAPE</div>
+    <div class="rule"></div>
+  </div>
+
+  <!-- LEFT fighter -->
+  <div class="fighter left">
+    <div class="corner">RED CORNER</div>
+    <div class="name">YOU</div>
+    <div class="portrait"><div class="silh"></div><div class="ph">[ YOUR CUTOUT REEL ]</div></div>
+    <div class="stats">
+      <div class="stat"><span class="lab">ELO</span><div class="val">1450–1600</div><div class="bar"><i style="width:68%"></i></div></div>
+      <div class="stat"><span class="lab">HEIGHT</span><div class="val">5'11"</div><div class="bar"><i style="width:74%"></i></div></div>
+      <div class="stat"><span class="lab">STYLE</span><div class="val">PRESSURE</div></div>
+    </div>
+  </div>
+  <div class="handle left">@YOURCHANNEL</div>
+
+  <!-- RIGHT fighter -->
+  <div class="fighter right">
+    <div class="corner">BLUE CORNER</div>
+    <div class="name">IRON MIKE</div>
+    <div class="portrait"><div class="silh"></div><div class="ph">[ OPPONENT REEL ]</div></div>
+    <div class="stats">
+      <div class="stat"><span class="lab">ELO</span><div class="val">1700+</div><div class="bar"><i style="width:82%"></i></div></div>
+      <div class="stat"><span class="lab">HEIGHT</span><div class="val">5'10"</div><div class="bar"><i style="width:71%"></i></div></div>
+      <div class="stat"><span class="lab">STYLE</span><div class="val">PEEK-A-BOO</div></div>
+    </div>
+  </div>
+  <div class="handle right">THRILL OF THE FIGHT</div>
+
+  <div class="vs"><span>VS</span></div>
+
+  <!-- texture overlays -->
+  <svg class="scratches" viewBox="0 0 1280 720" preserveAspectRatio="none">
+    <g stroke="#000" stroke-opacity=".5" fill="none">
+      <path d="M120 0 L160 720" stroke-width="1"/><path d="M1100 0 L1060 720" stroke-width="1.5"/>
+      <path d="M640 40 L648 700" stroke-width="1"/><path d="M300 200 L900 230" stroke-width="1" stroke-opacity=".2"/>
+    </g>
+  </svg>
+  <svg class="grain"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>
+  <div class="vignette"></div>
+  <div class="frame"></div>
+</div>
+
+<!-- torn-edge filter -->
+<svg width="0" height="0"><filter id="tear"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.15" numOctaves="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="38"/></filter></svg>
+</body>
+</html>

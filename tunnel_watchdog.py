@@ -72,9 +72,15 @@ def spawn():
         LOG.write_text("", encoding="utf-8")
     except OSError:
         pass
+    # CREATE_NO_WINDOW: the watchdog runs under console-less pythonw, so launching
+    # console-mode cloudflared.exe would otherwise pop a NEW empty terminal window
+    # every time the tunnel is (re)started — and quick tunnels recycle often. This
+    # flag keeps cloudflared windowless. (0 on non-Windows.)
+    no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     proc = subprocess.Popen(
         [CF, "tunnel", "--url", f"http://localhost:{PORT}", "--logfile", str(LOG)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        creationflags=no_window)
     url = None
     waited = 0.0
     while waited < URL_WAIT:

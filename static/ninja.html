@@ -1,0 +1,324 @@
+<!doctype html><html lang=en><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>FightSync — Ninja Capture</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#080b12;color:#e8eefc;font:15px system-ui,'Segoe UI',Roboto,sans-serif}
+  a{color:#9db4ff}
+  .wrap{max-width:1150px;margin:0 auto;padding:18px 18px 60px}
+  h1{font-size:24px;margin:6px 0}
+  .sub{color:#8aa0c0;font-size:14px;font-weight:400}
+  p.lead{color:#9fb2cf;font-size:14px;line-height:1.5;max-width:760px}
+  .join{background:#0e1626;border:1px solid #26324a;border-radius:14px;padding:16px 18px;margin:14px 0;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .join img{width:148px;height:148px;background:#fff;border-radius:10px;flex:0 0 auto}
+  .join .txt{min-width:220px}
+  .link{font-size:18px;font-weight:800;color:#9db4ff;word-break:break-all;margin:4px 0}
+  .muted{color:#8aa0c0;font-size:13px}
+  .rec-bar{margin:18px 0 10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  button{font-size:16px;padding:12px 22px;border-radius:11px;border:1px solid #2a3a5d;background:#13203a;color:#e8eefc;font-weight:800;cursor:pointer}
+  button.rec{background:#ff3b3b;border-color:#ff3b3b}
+  button.rec.on{background:#7a1414;border-color:#ff3b3b;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  button:disabled{opacity:.4;cursor:default}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:6px}
+  .cam{background:#000;border:2px solid #26324a;border-radius:12px;overflow:hidden;position:relative}
+  .cam.rec{border-color:#ff3b3b;box-shadow:0 0 0 2px #ff3b3b55}
+  .cam video{width:100%;display:block;background:#000;aspect-ratio:16/9;object-fit:cover}
+  .cam .tag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.62);padding:4px 11px;border-radius:8px;font-weight:800;font-size:13px}
+  .cam .reddot{position:absolute;top:9px;right:10px;width:12px;height:12px;border-radius:50%;background:#ff3b3b;display:none;box-shadow:0 0 9px #ff3b3b}
+  .cam.rec .reddot{display:block;animation:pulse 1s infinite}
+  .empty{grid-column:1/-1;border:2px dashed #26324a;border-radius:12px;padding:38px;text-align:center;color:#6f819f}
+  #saved{margin-top:16px}
+  #saved a{color:#3ddc84;display:block;margin:5px 0;text-decoration:none}
+  .beta{font-size:11px;background:#2c5cff;color:#fff;padding:2px 8px;border-radius:20px;vertical-align:middle;margin-left:6px}
+  .bcsec{border-top:1px solid #26324a;margin-top:30px;padding-top:22px}
+  .bc-slot,.bc-fighter{background:#0e1626;border:1px solid #26324a;border-radius:12px;padding:14px 16px;margin:10px 0}
+  .bc-fighters{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.bc-fighters{grid-template-columns:1fr}}
+  .bcsec label{display:block;font-weight:700;margin-bottom:7px;font-size:14px}
+  .bcsec select{width:100%;padding:9px 11px;border-radius:9px;border:1px solid #2a3a5d;background:#13203a;color:#e8eefc;font-size:14px}
+  .anglerow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .anglerow select{flex:1}
+  .anglerow button{padding:8px 11px;border-radius:9px;border:1px solid #2a3a5d;background:#1a2336;color:#e8eefc;cursor:pointer;font-weight:600}
+  .addangle{margin-top:2px;padding:7px 13px;border-radius:9px;border:1px dashed #3a4a6d;background:transparent;color:#9db4ff;cursor:pointer;font-size:13px;font-weight:600}
+  .autodir{align-items:center;gap:8px;margin-top:11px;font-weight:700;color:#c9a6ff;cursor:pointer}
+  .autodir input{width:auto;margin:0}
+  button.go2{font-size:16px;padding:12px 22px;border-radius:11px;border:1px solid #2c5cff;background:#2c5cff;color:#fff;font-weight:800;cursor:pointer}
+  #bcResult video{width:100%;max-width:660px;border-radius:10px;margin-top:12px;background:#000}
+  #bcResult a.dl{display:inline-block;margin-top:8px;color:#3ddc84;text-decoration:none;font-weight:700}
+</style></head><body>
+<nav id="fsnav" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:7px 12px;background:#0b111c;border-bottom:1px solid #26324a;font:13px system-ui,'Segoe UI',Roboto,sans-serif;position:sticky;top:0;z-index:500">
+<a href="/" style="color:#e8eefc;text-decoration:none;font-weight:800;margin-right:8px">🥊 FightSync</a>
+<a href="/studio" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Form Studio</a>
+<a href="/label" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Labeler</a>
+<a href="/subtitles" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Captions</a>
+<a href="/cleanup" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Cleanup</a>
+<a href="/ninja" style="color:#c9a6ff;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🥷 Ninja Cam</a>
+<a href="/live" style="color:#ff7b7b;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🔴 Live</a>
+</nav>
+<script>document.querySelectorAll('#fsnav a').forEach(function(a){if(a.getAttribute('href')===location.pathname){a.style.background='#1b2740';a.style.color='#fff';}});</script>
+
+<div class=wrap>
+  <h1>🥷 Ninja Capture <span class=beta>prototype</span></h1>
+  <p class=sub>Use any phone as a wireless camera (WebRTC) — no cable, no import.</p>
+  <p class=lead>Open the link below on a phone that's on the <b>same WiFi</b> as this PC. Its camera streams in live.
+  Connect as many phones as you like, then hit <b>Record all</b> — every camera records at once, so the clips start
+  on the <b>same timeline</b> (no manual sync). Each clip lands in your FightSync library, ready to drop into a round.</p>
+
+  <div class=join>
+    <img id=qr alt="scan to join">
+    <div class=txt>
+      <div class=muted>On your phone's browser, open:</div>
+      <div class=link id=joinlink>loading…</div>
+      <div class=muted>(camera + mic permission — tap "Go live")</div>
+    </div>
+  </div>
+
+  <div class=rec-bar>
+    <button id=recBtn class=rec disabled>⏺ Record all</button>
+    <span id=recStatus class=muted>Waiting for a phone to connect…</span>
+  </div>
+
+  <div class=grid id=grid>
+    <div class=empty id=emptyTile>No cameras yet — open the link above on your phone to add one.</div>
+  </div>
+
+  <div id=saved></div>
+
+  <div class=bcsec>
+    <h2 style="font-size:20px;margin:0 0 4px">🎬 Build a broadcast <span class=muted style="font-weight:400">— spectator + two fighters</span></h2>
+    <p class=muted style="margin-top:4px">Pick the spectator gameplay (center) and each fighter's camera (bottom corners). Give a fighter a <b>second angle</b> to unlock <b>🎯 Auto-direct</b> — it picks their clearer angle automatically.</p>
+    <div class=bc-slot>
+      <label>🎮 Spectator gameplay <span class=muted style="font-weight:400">(fills the center)</span></label>
+      <select id=bcSpectator></select>
+    </div>
+    <div class=bc-fighters>
+      <div class=bc-fighter>
+        <label>🥊 Fighter 1 <span class=muted style="font-weight:400">— bottom-left</span></label>
+        <div id=f1angles></div>
+        <button class=addangle data-f="1">+ add angle</button>
+        <label class=autodir id=f1auto style="display:none"><input type=checkbox id=f1autoChk> 🎯 Auto-direct (pick best angle)</label>
+      </div>
+      <div class=bc-fighter>
+        <label>🥊 Fighter 2 <span class=muted style="font-weight:400">— bottom-right</span></label>
+        <div id=f2angles></div>
+        <button class=addangle data-f="2">+ add angle</button>
+        <label class=autodir id=f2auto style="display:none"><input type=checkbox id=f2autoChk> 🎯 Auto-direct (pick best angle)</label>
+      </div>
+    </div>
+    <div class=rec-bar style="margin-top:14px">
+      <button id=bcBuild class=go2>🎬 Build broadcast</button>
+      <span id=bcStatus class=muted></span>
+    </div>
+    <div id=bcResult></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const room="fs";
+const myId="rx-"+Math.random().toString(36).slice(2,8);
+const cams={};                 // senderId -> {pc, stream, video, label, recorder, chunks}
+let ws, recording=false;
+
+async function initLink(){
+  let host=location.host;
+  try{ const d=await(await fetch("/api/ninja/lan")).json(); if(d&&d.host) host=d.host; }catch(_){}
+  const url=location.protocol+"//"+host+"/ninja/cam?room="+room;
+  $("joinlink").textContent=url;
+  $("qr").src="https://api.qrserver.com/v1/create-qr-code/?size=148x148&margin=0&data="+encodeURIComponent(url);
+  $("qr").onerror=()=>{ $("qr").style.display="none"; };   // offline → just show the text link
+}
+
+function connectWS(){
+  ws=new WebSocket((location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/ws/ninja");
+  ws.onopen=()=>ws.send(JSON.stringify({type:"join",room,id:myId,role:"receiver"}));
+  ws.onmessage=async e=>{
+    const m=JSON.parse(e.data);
+    if(m.type==="offer") await onOffer(m);
+    else if(m.type==="ice" && m.candidate){ const c=cams[m.from]; if(c&&c.pc){ try{ await c.pc.addIceCandidate(m.candidate); }catch(_){} } }
+    else if(m.type==="peer-left") removeCam(m.id);
+  };
+  ws.onclose=()=>setTimeout(connectWS,1500);
+}
+
+async function onOffer(m){
+  const sid=m.from;
+  let c=cams[sid];
+  if(!c) c=cams[sid]={pc:null,stream:null,video:null,label:m.label||"cam",chunks:[],recorder:null};
+  c.label=m.label||c.label;
+  if(c.pc){ try{c.pc.close();}catch(_){} }
+  const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+  c.pc=pc;
+  pc.ontrack=e=>{ c.stream=e.streams[0]; addTile(sid); };
+  pc.onicecandidate=e=>{ if(e.candidate) ws.send(JSON.stringify({type:"ice",to:sid,candidate:e.candidate})); };
+  pc.onconnectionstatechange=()=>{ if(["failed","closed"].includes(pc.connectionState)) removeCam(sid); };
+  await pc.setRemoteDescription(new RTCSessionDescription(m.sdp));
+  const ans=await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  ws.send(JSON.stringify({type:"answer",to:sid,sdp:pc.localDescription}));
+}
+
+function addTile(sid){
+  const c=cams[sid]; if(!c) return;
+  $("emptyTile") && $("emptyTile").remove();
+  if(!c.video){
+    const d=document.createElement("div"); d.className="cam"; d.id="cam-"+sid;
+    d.innerHTML='<div class=tag></div><div class=reddot></div>';
+    d.querySelector(".tag").textContent=c.label;
+    const v=document.createElement("video"); v.autoplay=true; v.playsInline=true; v.muted=true;
+    d.appendChild(v); $("grid").appendChild(d); c.video=v;
+  }
+  c.video.srcObject=c.stream;
+  if(recording) startOne(sid);        // a camera that joins mid-recording starts recording too
+  updateStatus();
+}
+
+function removeCam(sid){
+  const c=cams[sid]; if(!c) return;
+  try{ c.recorder && c.recorder.state!=="inactive" && c.recorder.stop(); }catch(_){}
+  try{ c.pc && c.pc.close(); }catch(_){}
+  const d=$("cam-"+sid); if(d) d.remove();
+  delete cams[sid];
+  if(!Object.keys(cams).length && !$("emptyTile")){
+    const e=document.createElement("div"); e.className="empty"; e.id="emptyTile";
+    e.textContent="No cameras yet — open the link above on your phone to add one.";
+    $("grid").appendChild(e);
+  }
+  updateStatus();
+}
+
+function updateStatus(){
+  const n=Object.keys(cams).length;
+  $("recBtn").disabled = (n===0 && !recording);
+  if(recording){ $("recStatus").textContent="● RECORDING "+n+" camera"+(n===1?"":"s")+" — synced. Hit Stop when the round ends."; }
+  else $("recStatus").textContent = n ? (n+" camera"+(n===1?"":"s")+" connected — ready to record.") : "Waiting for a phone to connect…";
+}
+
+function pickMime(){
+  for(const t of ["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"])
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t;
+  return "";
+}
+function startOne(sid){
+  const c=cams[sid]; if(!c||!c.stream) return;
+  c.chunks=[];
+  try{
+    const mr=new MediaRecorder(c.stream,{mimeType:pickMime()});
+    c.recorder=mr;
+    mr.ondataavailable=e=>{ if(e.data&&e.data.size) c.chunks.push(e.data); };
+    mr.start(1000);
+    const d=$("cam-"+sid); if(d) d.classList.add("rec");
+  }catch(e){ console.warn("record failed",e); }
+}
+
+$("recBtn").onclick=()=>{ recording?stopRec():startRec(); };
+
+function startRec(){
+  const ids=Object.keys(cams).filter(s=>cams[s].stream);
+  if(!ids.length){ $("recStatus").textContent="No cameras connected — open the link on your phone first."; return; }
+  ids.forEach(startOne);              // tight loop → all recorders start within a few ms (synced)
+  recording=true;
+  $("recBtn").textContent="⏹ Stop"; $("recBtn").classList.add("on");
+  updateStatus();
+}
+
+async function stopRec(){
+  recording=false;
+  $("recBtn").textContent="⏺ Record all"; $("recBtn").classList.remove("on");
+  $("recStatus").textContent="Saving clips…";
+  const ids=Object.keys(cams).filter(s=>cams[s].recorder);
+  await Promise.all(ids.map(sid=>new Promise(res=>{
+    const c=cams[sid];
+    if(!c.recorder || c.recorder.state==="inactive"){ res(); return; }
+    c.recorder.onstop=async()=>{
+      const d=$("cam-"+sid); if(d) d.classList.remove("rec");
+      const blob=new Blob(c.chunks,{type:"video/webm"});
+      if(!blob.size){ res(); return; }
+      const fd=new FormData(); fd.append("file",blob,"cam.webm"); fd.append("label",c.label);
+      try{
+        const r=await(await fetch("/api/ninja/save",{method:"POST",body:fd})).json();
+        if(r&&r.ok){ const a=document.createElement("a"); a.href="#"; a.textContent="✓ saved — "+c.label+"  ("+r.name+")"; $("saved").appendChild(a); }
+      }catch(_){}
+      res();
+    };
+    c.recorder.stop();
+  })));
+  $("recStatus").textContent="✓ Saved to your library. In FightSync → Add clips → the saved-uploads dropdown.";
+  updateStatus();
+}
+
+// ── Build broadcast ──────────────────────────────────────────────
+let libItems=[];
+function optsHTML(sel){
+  let h='<option value="">— choose a clip —</option>';
+  for(const it of libItems){
+    const p=it.path.replace(/"/g,'&quot;');
+    h+='<option value="'+p+'"'+(it.path===sel?' selected':'')+'>'+(it.label||it.title||it.name)+'</option>';
+  }
+  return h;
+}
+async function loadLibrary(){
+  try{ const d=await(await fetch("/api/library")).json(); libItems=d.items||[]; }catch(_){ libItems=[]; }
+  $("bcSpectator").innerHTML=optsHTML("");
+  $("f1angles").innerHTML=""; $("f2angles").innerHTML="";
+  addAngle(1); addAngle(2);         // seed one angle row per fighter
+}
+function refreshAuto(f){
+  const rows=document.querySelectorAll("#f"+f+"angles .anglerow select");
+  let filled=0; rows.forEach(s=>{ if(s.value) filled++; });
+  $("f"+f+"auto").style.display = filled>=2 ? "flex" : "none";   // appears only on multiple sources
+}
+function addAngle(f){
+  const wrap=$("f"+f+"angles");
+  if(wrap.querySelectorAll(".anglerow").length>=3) return;        // cap at 3 angles
+  const row=document.createElement("div"); row.className="anglerow";
+  const sel=document.createElement("select"); sel.innerHTML=optsHTML(""); sel.onchange=()=>refreshAuto(f);
+  const rm=document.createElement("button"); rm.textContent="✕"; rm.title="remove angle";
+  rm.onclick=()=>{ row.remove(); refreshAuto(f); };
+  row.appendChild(sel); row.appendChild(rm); wrap.appendChild(row);
+  refreshAuto(f);
+}
+document.querySelectorAll(".addangle").forEach(b=>b.onclick=()=>addAngle(+b.dataset.f));
+function fighterPaths(f){
+  return [...document.querySelectorAll("#f"+f+"angles .anglerow select")].map(s=>s.value).filter(Boolean);
+}
+$("bcBuild").onclick=async()=>{
+  const spec=$("bcSpectator").value;
+  if(!spec){ $("bcStatus").textContent="Pick the spectator gameplay clip first."; return; }
+  const f1=fighterPaths(1), f2=fighterPaths(2);
+  if(!f1.length && !f2.length){ $("bcStatus").textContent="Pick at least one fighter's camera."; return; }
+  const fd=new FormData();
+  fd.append("spectator",spec);
+  fd.append("f1_json",JSON.stringify(f1)); fd.append("f2_json",JSON.stringify(f2));
+  fd.append("auto1", ($("f1autoChk").checked && f1.length>=2)?1:0);
+  fd.append("auto2", ($("f2autoChk").checked && f2.length>=2)?1:0);
+  $("bcBuild").disabled=true; $("bcResult").innerHTML=""; $("bcStatus").textContent="Starting…";
+  try{
+    const r=await(await fetch("/api/ninja/broadcast",{method:"POST",body:fd})).json();
+    if(!r.job_id) throw new Error(r.detail||"failed to start");
+    pollBroadcast(r.job_id);
+  }catch(e){ $("bcStatus").textContent="Error: "+e.message; $("bcBuild").disabled=false; }
+};
+async function pollBroadcast(id){
+  try{
+    const s=await(await fetch("/api/status/"+id)).json();
+    $("bcStatus").textContent=(s.message||s.status||"")+(s.percent?" ("+s.percent+"%)":"");
+    if(s.status==="done"){
+      $("bcBuild").disabled=false;
+      const f=s.result&&s.result.final;
+      $("bcResult").innerHTML='<video controls src="/api/media?path='+encodeURIComponent(f)+'"></video>'
+        +'<br><a class=dl href="/api/download/'+id+'">⬇ Download broadcast</a>';
+      $("bcStatus").textContent="✓ Broadcast ready.";
+      return;
+    }
+    if(s.status==="error"){ $("bcStatus").textContent="Error: "+(s.message||"failed"); $("bcBuild").disabled=false; return; }
+  }catch(_){}
+  setTimeout(()=>pollBroadcast(id),1200);
+}
+loadLibrary();
+
+initLink();
+connectWS();
+</script></body></html>

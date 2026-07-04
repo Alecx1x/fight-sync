@@ -1,0 +1,86 @@
+<!doctype html><html lang=en><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>FightSync Cam</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#080b12;color:#e8eefc;font:16px system-ui,-apple-system,Segoe UI,sans-serif;text-align:center;overflow-x:hidden}
+  header{padding:10px;font-weight:800;letter-spacing:.5px;color:#9db4ff}
+  video{width:100%;max-height:64vh;background:#000;object-fit:cover;display:block}
+  .bar{padding:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+  button,input{font-size:16px;padding:11px 15px;border-radius:11px;border:1px solid #2a3a5d;background:#13203a;color:#e8eefc}
+  button{cursor:pointer}
+  button.go{background:#2c5cff;border-color:#2c5cff;font-weight:800;flex:1;max-width:260px}
+  #status{padding:10px 14px;font-size:14px;color:#9fb2cf;min-height:20px}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:#c3423a;margin-right:7px;vertical-align:middle}
+  .dot.on{background:#3ddc84;box-shadow:0 0 10px #3ddc84}
+  .hint{font-size:13px;color:#6f819f;padding:0 16px 18px}
+</style></head><body>
+  <header>🥷 FightSync Cam</header>
+  <div class=bar>
+    <input id=label placeholder="camera name" value="Phone" style="width:150px" autocomplete=off>
+    <button id=flip>🔄 flip</button>
+  </div>
+  <video id=v autoplay playsinline muted></video>
+  <div class=bar><button id=go class=go>▶ Go live to FightSync</button></div>
+  <div id=status><span class=dot id=dot></span><span id=msg>Tap "Go live" — your camera will stream into FightSync on your PC.</span></div>
+  <div class=hint>Keep this page open + your phone unlocked while recording. Your PC and phone must be on the same WiFi.</div>
+<script>
+const $=id=>document.getElementById(id);
+const room=new URLSearchParams(location.search).get("room")||"fs";
+const myId="cam-"+Math.random().toString(36).slice(2,8);
+let ws,pc,stream,facing="environment",rxId=null,live=false;
+function setMsg(t,on){ $("msg").textContent=t; $("dot").className="dot"+(on?" on":""); }
+
+async function getCam(){
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({
+    video:{facingMode:facing,width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},
+    audio:true});
+  $("v").srcObject=stream;
+}
+$("flip").onclick=async()=>{
+  facing=facing==="environment"?"user":"environment";
+  try{ await getCam(); }catch(e){ return; }
+  if(pc){ // swap the outgoing tracks without renegotiating
+    const vt=stream.getVideoTracks()[0], sv=pc.getSenders().find(s=>s.track&&s.track.kind==="video"); if(sv&&vt) sv.replaceTrack(vt);
+    const at=stream.getAudioTracks()[0], sa=pc.getSenders().find(s=>s.track&&s.track.kind==="audio"); if(sa&&at) sa.replaceTrack(at);
+  }
+};
+
+function connectWS(){
+  ws=new WebSocket((location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/ws/ninja");
+  ws.onopen=()=>{ ws.send(JSON.stringify({type:"join",room,id:myId,role:"sender"})); if(!live) setMsg("Connected — waiting for FightSync to open the Ninja Capture page…"); };
+  ws.onmessage=async e=>{
+    const m=JSON.parse(e.data);
+    if(m.type==="peers"){ const r=(m.peers||[]).find(p=>p.role==="receiver"); if(r){ rxId=r.id; startCall(); } }
+    else if(m.type==="peer-joined" && m.role==="receiver"){ rxId=m.id; startCall(); }
+    else if(m.type==="answer"){ try{ await pc.setRemoteDescription(new RTCSessionDescription(m.sdp)); }catch(_){} }
+    else if(m.type==="ice" && m.candidate){ try{ await pc.addIceCandidate(m.candidate); }catch(_){} }
+    else if(m.type==="peer-left" && m.id===rxId){ setMsg("FightSync closed — will reconnect when it's back."); rxId=null; if(pc){pc.close();pc=null;} }
+  };
+  ws.onclose=()=>{ if(live) setMsg("Reconnecting…"); setTimeout(connectWS,1500); };
+}
+
+async function startCall(){
+  if(!rxId||!stream) return;
+  if(pc) pc.close();
+  pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+  stream.getTracks().forEach(t=>pc.addTrack(t,stream));
+  pc.onicecandidate=e=>{ if(e.candidate&&rxId) ws.send(JSON.stringify({type:"ice",to:rxId,candidate:e.candidate})); };
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState==="connected") setMsg("● LIVE — this camera is showing in FightSync.",true);
+    else if(["failed","disconnected","closed"].includes(pc.connectionState)) setMsg("Connection "+pc.connectionState+" — retrying…");
+  };
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  ws.send(JSON.stringify({type:"offer",to:rxId,sdp:pc.localDescription,label:($("label").value||"Phone").slice(0,24)}));
+}
+
+$("go").onclick=async()=>{
+  try{ await getCam(); }
+  catch(e){ setMsg("Camera blocked: "+e.message+". Allow camera access + reload."); return; }
+  live=true; $("go").style.display="none"; $("label").disabled=true;
+  connectWS();
+};
+</script></body></html>

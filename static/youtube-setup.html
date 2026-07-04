@@ -1,0 +1,84 @@
+<!doctype html><html lang=en><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>FightSync — YouTube Upload Setup</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#080b12;color:#e8eefc;font:16px/1.6 system-ui,'Segoe UI',Roboto,sans-serif}
+  a{color:#7fb0ff}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 20px 70px}
+  h1{font-size:26px;margin:6px 0 2px}
+  h2{font-size:19px;margin:30px 0 8px;color:#cfe0ff}
+  .lead{color:#9fb2cf}
+  .card{background:#0e1626;border:1px solid #26324a;border-radius:12px;padding:16px 18px;margin:14px 0}
+  .good{border-color:#2c6b46;background:#0d1a12}
+  .warn{border-color:#6b5a22;background:#1a1508}
+  ol,ul{padding-left:20px}
+  li{margin:7px 0}
+  code{background:#1b2740;padding:2px 7px;border-radius:6px;font-size:14px}
+  .pill{display:inline-block;background:#2c5cff;color:#fff;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px}
+  .back{color:#8aa0c0;text-decoration:none;font-size:14px}
+  .btn{display:inline-block;background:#2c5cff;color:#fff;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:10px;margin-top:6px}
+  .muted{color:#8aa0c0;font-size:14px}
+</style></head><body>
+<div class=wrap>
+  <a class=back href="/">← Back to FightSync</a>
+  <h1>⬆ One-click YouTube upload — setup</h1>
+  <p class=lead>FightSync can publish your finished video straight to YouTube — with the title,
+  description, tags and chapters it already generated. This is the one-time setup that turns it on.</p>
+
+  <div class="card good">
+    <h2 style="margin-top:0">✅ First: it's free — you won't be billed</h2>
+    <p>YouTube's upload API <b>doesn't cost money</b> and doesn't even need billing turned on. Instead each
+    setup gets a <b>free daily quota</b> — about <b>6 uploads per day</b>. Go over it and it simply waits until
+    the next day; you're never charged a cent.</p>
+  </div>
+
+  <h2>Why a login file instead of a simple "API key"?</h2>
+  <p>Uploading a video means writing to <i>your</i> YouTube channel, so Google requires a proper
+  <b>"allow this app to upload for me"</b> permission (OAuth) — a plain API key only reads public data and
+  can't upload. That's why the steps below create a small credential file instead of a key.</p>
+
+  <h2>The one-time setup <span class=muted>(~5 minutes)</span></h2>
+  <ol>
+    <li>Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> and sign
+      in with <b>the Google account that owns your YouTube channel</b>. (Google-branded pages — not Auth0 or any
+      other "oauth" site.)</li>
+    <li><b>Create a project:</b> top bar → project dropdown → <b>New Project</b> → name it "FightSync" → Create →
+      select it.</li>
+    <li><b>Enable the API:</b> top search bar → type <b>YouTube Data API v3</b> → open it → <b>Enable</b>.</li>
+    <li><b>Consent screen:</b> left menu → <b>APIs &amp; Services → OAuth consent screen</b> → <b>External</b> →
+      fill App name + your email → on the <b>Test users</b> step, <b>add your own Gmail</b> (this is what lets you
+      use it before Google verifies it).</li>
+    <li><b>Create the credential:</b> left menu → <b>APIs &amp; Services → Credentials</b> →
+      <b>+ Create Credentials → OAuth client ID</b> → Application type = <b>Desktop app</b> → Create →
+      <b>Download JSON</b>.</li>
+    <li>Save that file as <code>client_secret.json</code> in your <code>fight-sync</code> folder.</li>
+    <li>Run once in a terminal: <code>.venv\Scripts\python youtube_auth.py</code> → a browser opens → sign in →
+      if you see <b>"Google hasn't verified this app"</b>, click <b>Advanced → Go to FightSync → Allow</b>
+      (it's your own app, so that warning is expected).</li>
+  </ol>
+  <p>Done — reload FightSync and the Export step shows an <b>⬆ Upload now</b> button. You never repeat this.</p>
+
+  <div class="card warn">
+    <h2 style="margin-top:0">⚠ Two things to know</h2>
+    <ul>
+      <li><b>Private until verified:</b> while your project is unverified, YouTube may force uploads to
+        Private/Unlisted. Fine for personal use — upload unlisted, then flip to Public in YouTube Studio.</li>
+      <li><b>Testing-mode tokens:</b> if you leave the consent screen in "Testing", the saved permission expires
+        about weekly and you'd re-run the auth step. Switching it to "Production" (still just for you) removes that.</li>
+    </ul>
+  </div>
+
+  <h2>Sharing FightSync with someone else? <span class=pill>bring your own credential</span></h2>
+  <p>If a friend runs their <b>own copy</b> of FightSync, they should do the steps above with <b>their own</b>
+  Google account — giving them their <b>own separate free quota</b>, completely independent of yours. The
+  credential is just a file in their folder.</p>
+  <p class=muted>Only if everyone uploaded through <b>one instance you host</b> (your <code>client_secret.json</code>)
+  would they share <i>your</i> ~6/day quota — still no cost, but a shared limit, and you'd need Google to verify the
+  app for non-test users. Either way, each person's video always uploads to <b>their own</b> channel (they sign in
+  with their own account); you're only ever the "doorway," never uploading on your account.</p>
+
+  <a class=btn href="https://console.cloud.google.com" target="_blank">Open Google Cloud Console →</a>
+</div>
+</body></html>

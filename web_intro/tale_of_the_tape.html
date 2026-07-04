@@ -1,0 +1,276 @@
+<!-- @dsCard group="Tale of the Tape" name="Cinematic VS Intro (animated)" subtitle="1280x720 · slam-in, igniting seam, counting stats, cutout reels, push-in outro · plays live" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tale of the Tape — Cinematic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Saira+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#e4282d; --red-dk:#7c0d10; --blue:#3b78f0; --blue-dk:#16306f;
+    --bone:#f0ebdf; --ash:#9b958a; --ink:#080706;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000}
+  /* the scene is authored at 1280x720; the renderer captures it 1:1 */
+  #stage{position:relative;width:1280px;height:720px;overflow:hidden;background:#05060a;
+    font-family:'Oswald',sans-serif;transform-origin:50% 50%}
+
+  /* ───────── arena backdrop ───────── */
+  .bg{position:absolute;inset:0;
+    background:
+      radial-gradient(80% 60% at 50% 38%, rgba(120,120,140,.10), transparent 70%),
+      radial-gradient(140% 100% at 50% 0%, #1a1c24 0%, #0c0d13 48%, #050609 100%);}
+  .floor{position:absolute;left:0;right:0;bottom:0;height:42%;
+    background:linear-gradient(0deg, rgba(255,255,255,.05), transparent);
+    transform:perspective(600px) rotateX(58deg);transform-origin:bottom;opacity:.5}
+  .bgglow{position:absolute;top:30%;width:60%;height:80%;filter:blur(80px);opacity:.5}
+  .bgglow.l{left:-10%;background:radial-gradient(closest-side,rgba(228,40,45,.55),transparent)}
+  .bgglow.r{right:-10%;background:radial-gradient(closest-side,rgba(59,120,240,.5),transparent)}
+
+  /* ───────── corner panels (slam in) ───────── */
+  .panel{position:absolute;top:0;bottom:0;width:62%;overflow:hidden;will-change:transform}
+  .panel.left{left:0;clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
+  .panel.right{right:0;clip-path:polygon(18% 0,100% 0,100% 100%,0 100%)}
+  .pwall{position:absolute;inset:0;
+    background:
+      radial-gradient(120% 90% at 30% 10%, #23262e, #14161c 55%, #0a0b10 100%);}
+  .pwall::after{content:"";position:absolute;inset:0;opacity:.5;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+  .ptint{position:absolute;inset:0;mix-blend-mode:screen}
+  .left .ptint{background:linear-gradient(100deg, rgba(228,40,45,.28), transparent 60%)}
+  .right .ptint{background:linear-gradient(260deg, rgba(59,120,240,.26), transparent 60%)}
+  .reel{position:absolute;inset:0;width:1280px;height:720px}
+
+  /* ───────── igniting seam ───────── */
+  .seam{position:absolute;top:-8%;left:50%;height:116%;width:6px;
+    transform:translateX(-50%) rotate(9.2deg);transform-origin:50% 50%;
+    background:linear-gradient(var(--red-dk),#ff5a3c 18%,#fff7f0 50%,#ff5a3c 82%,var(--red-dk));
+    box-shadow:0 0 26px 7px rgba(228,40,45,.6),0 0 80px 22px rgba(228,40,45,.32);will-change:opacity,transform}
+  .seamsweep{position:absolute;top:-8%;left:50%;height:116%;width:120px;
+    transform:translateX(-50%) rotate(9.2deg);pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);mix-blend-mode:screen;opacity:0}
+
+  /* ───────── header ───────── */
+  .head{position:absolute;top:24px;left:50%;transform:translateX(-50%);text-align:center;z-index:9;will-change:transform,opacity}
+  .head .plate{display:inline-block;padding:7px 26px;background:rgba(8,7,6,.72);
+    border-top:2px solid rgba(240,235,223,.25);border-bottom:2px solid var(--red);
+    backdrop-filter:blur(2px)}
+  .head .k{font-family:'Saira Condensed';font-weight:800;letter-spacing:9px;font-size:26px;color:var(--bone)}
+  .head .k b{color:var(--red);font-weight:800}
+
+  /* ───────── fighter text ───────── */
+  .fr{position:absolute;top:104px;width:44%;padding:0 42px;z-index:8;will-change:transform,opacity}
+  .fr.left{left:0;text-align:left} .fr.right{right:0;text-align:right}
+  .corner{font-family:'Saira Condensed';font-weight:800;letter-spacing:5px;font-size:17px}
+  .left .corner{color:var(--red)} .right .corner{color:#7aa0f5}
+  .name{font-family:'Anton';font-size:66px;line-height:.9;color:var(--bone);text-transform:uppercase;
+    letter-spacing:1px;text-shadow:3px 3px 0 #000,0 6px 30px rgba(0,0,0,.6)}
+  .stats{margin-top:200px}
+  .stat{margin:13px 0}
+  .stat .lab{font-family:'Saira Condensed';font-weight:700;letter-spacing:3px;font-size:13px;color:var(--ash)}
+  .stat .val{font-family:'Anton';font-size:30px;color:var(--bone);line-height:1}
+  .bar{height:8px;margin-top:6px;background:rgba(255,255,255,.08);position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.5)}
+  .bar i{position:absolute;top:0;bottom:0;left:0;width:0}
+  .left .bar i{background:linear-gradient(90deg,var(--red-dk),var(--red))}
+  .right .bar i{left:auto;right:0;background:linear-gradient(90deg,var(--blue-dk),var(--blue))}
+  .right .stat{display:flex;flex-direction:column;align-items:flex-end}
+  .handle{position:absolute;bottom:26px;font-family:'Saira Condensed';font-weight:600;letter-spacing:2px;font-size:15px;color:var(--ash);z-index:8}
+  .handle.left{left:44px} .handle.right{right:44px}
+
+  /* ───────── VS badge ───────── */
+  .vs{position:absolute;left:50%;top:50%;width:158px;height:158px;margin:-79px 0 0 -79px;z-index:10;
+    display:flex;align-items:center;justify-content:center;will-change:transform,opacity}
+  .vs .ring{position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 50% 35%,#20232b,#0a0b0f);
+    border:5px solid var(--bone);
+    box-shadow:0 0 0 4px #000,0 10px 40px rgba(0,0,0,.7),0 0 46px 8px rgba(228,40,45,.5),inset 0 0 30px rgba(0,0,0,.8)}
+  .vs .halo{position:absolute;inset:-22px;border-radius:50%;border:6px solid var(--red);opacity:.5;filter:blur(2px)}
+  .vs span{position:relative;font-family:'Anton';font-size:82px;color:var(--bone);
+    text-shadow:0 4px 0 #000,0 0 26px rgba(228,40,45,.8)}
+
+  /* ───────── overlays ───────── */
+  .splatter{position:absolute;left:50%;top:50%;width:560px;height:560px;margin:-280px 0 0 -280px;z-index:7;pointer-events:none;opacity:0}
+  .flash{position:absolute;inset:0;background:#fff7ef;opacity:0;z-index:14;pointer-events:none}
+  .shock{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;
+    border:8px solid rgba(255,200,170,.9);opacity:0;z-index:13;pointer-events:none}
+  .grain{position:absolute;inset:0;z-index:15;opacity:.09;mix-blend-mode:overlay;pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>")}
+  .vign{position:absolute;inset:0;z-index:13;pointer-events:none;box-shadow:inset 0 0 240px 70px rgba(0,0,0,.82)}
+  .frame{position:absolute;inset:0;z-index:16;pointer-events:none;box-shadow:inset 0 0 0 6px rgba(8,7,6,.92),inset 0 0 0 8px rgba(240,235,223,.10)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg"></div><div class="floor"></div>
+  <div class="bgglow l"></div><div class="bgglow r"></div>
+
+  <div class="panel left" id="pL"><div class="pwall"></div><canvas class="reel" id="rL" width="1280" height="720"></canvas><div class="ptint"></div></div>
+  <div class="panel right" id="pR"><div class="pwall"></div><canvas class="reel" id="rR" width="1280" height="720"></canvas><div class="ptint"></div></div>
+
+  <svg class="splatter" id="splat" viewBox="0 0 200 200">
+    <g fill="#7c0d10"><path d="M100 34c13 6 8 25 21 29s25-6 23 11-21 10-19 27 15 23 0 29-21-13-35-9-17 21-29 11-2-25-13-32-29-2-25-19 21-8 21-25-13-23 2-29 25 13 38 7z"/></g>
+    <g fill="#e4282d"><circle cx="58" cy="48" r="5"/><circle cx="150" cy="68" r="7"/><circle cx="128" cy="150" r="6"/><circle cx="46" cy="138" r="4"/><circle cx="165" cy="118" r="3"/></g>
+  </svg>
+
+  <div class="seam" id="seam"></div><div class="seamsweep" id="sweep"></div>
+
+  <div class="head" id="head"><div class="plate"><div class="k">TALE <b>OF</b> THE TAPE</div></div></div>
+
+  <div class="fr left" id="fL">
+    <div class="corner">RED CORNER</div>
+    <div class="name" id="nL">YOU</div>
+    <div class="stats" id="sL"></div>
+  </div>
+  <div class="handle left" id="hL">@yourchannel</div>
+
+  <div class="fr right" id="fR">
+    <div class="corner">BLUE CORNER</div>
+    <div class="name" id="nR">IRON MIKE</div>
+    <div class="stats" id="sR"></div>
+  </div>
+  <div class="handle right" id="hR">THRILL OF THE FIGHT</div>
+
+  <div class="vs" id="vs"><div class="halo"></div><div class="ring"></div><span>VS</span></div>
+
+  <div class="shock" id="shock"></div>
+  <div class="flash" id="flash"></div>
+  <div class="grain"></div><div class="vign"></div><div class="frame"></div>
+</div>
+
+<script>
+// ───────── data: real manifest injected by the renderer, else a demo so it previews live ─────────
+const DEMO = {
+  durationMs: 8000,
+  left:  {name:"YOU", corner:"RED CORNER", handle:"@yourchannel",
+          stats:[["ELO","1450-1600",.70],["HEIGHT","5'11\"",.66],["STYLE","PRESSURE",null]], frames:[], fps:20},
+  right: {name:"IRON MIKE", corner:"BLUE CORNER", handle:"THRILL OF THE FIGHT",
+          stats:[["ELO","1700+",.84],["HEIGHT","5'10\"",.71],["STYLE","PEEK-A-BOO",null]], frames:[], fps:20}
+};
+const M = window.MANIFEST || DEMO;
+const D = M.durationMs || 8000;
+window.SCENE_DURATION = D;
+
+// ───────── tiny deterministic animation helpers ─────────
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const eOutCubic=t=>1-Math.pow(1-t,3);
+const eOutBack=t=>{const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+const eInCubic=t=>t*t*t;
+const eOutQuint=t=>1-Math.pow(1-t,5);
+// seg: value that ramps from `from`→`to` across [t0,t1] with easing, held outside
+function seg(ms,t0,t1,from,to,ease){ if(ms<=t0)return from; if(ms>=t1)return to;
+  return lerp(from,to,ease((ms-t0)/(t1-t0))); }
+
+// ───────── build the fighter text + preload reels ─────────
+const $=id=>document.getElementById(id);
+function fillSide(side, data){
+  $('n'+side).textContent=(data.name||'FIGHTER').toUpperCase();
+  $('f'+side).querySelector('.corner').textContent=data.corner||(side==='L'?'RED CORNER':'BLUE CORNER');
+  $('h'+side).textContent=data.handle||'';
+  const wrap=$('s'+side); wrap.innerHTML='';
+  (data.stats||[]).forEach(([lab,val,frac])=>{
+    const d=document.createElement('div');d.className='stat';
+    d.innerHTML='<div class="lab">'+lab+'</div><div class="val" data-v="'+(val||'')+'">'+(val||'')+'</div>'+
+      (frac!=null?'<div class="bar" data-frac="'+frac+'"><i></i></div>':'');
+    wrap.appendChild(d);
+  });
+}
+fillSide('L',M.left); fillSide('R',M.right);
+
+const REEL={L:{imgs:[],fps:(M.left.fps||20),n:0,pw:0,ph:0},
+            R:{imgs:[],fps:(M.right.fps||20),n:0,pw:0,ph:0}};
+function preload(side,data){return Promise.all((data.frames||[]).map(src=>new Promise(res=>{
+  const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src;
+})).map(p=>p)).then(ims=>{ims=ims.filter(Boolean);REEL[side].imgs=ims;REEL[side].n=ims.length;
+  if(ims[0]){REEL[side].pw=data.pw||ims[0].naturalWidth;REEL[side].ph=data.ph||ims[0].naturalHeight;}});}
+window.sceneReady=()=>Promise.all([preload('L',M.left),preload('R',M.right)]);
+
+const ctx={L:$('rL').getContext('2d'),R:$('rR').getContext('2d')};
+// the reel canvas lives INSIDE its panel, so x is PANEL-LOCAL. Centre each fighter in the
+// visible part of their wedge (outer-ish so the inner arm clips at the seam, the outer at
+// the screen edge) — left toward 36% of the panel, right mirrored toward 64%.
+function half(side){ const pw=$('pL').clientWidth||794; return side==='L'?pw*0.36:pw*0.64; }
+function drawReel(side,ms){
+  const c=ctx[side], R=REEL[side]; c.clearRect(0,0,1280,720);
+  if(R.n){
+    const idx=Math.floor(ms/1000*R.fps)%R.n, im=R.imgs[idx];
+    const sc=720/R.ph, nw=R.pw*sc;
+    c.drawImage(im, half(side)-nw/2, 0, nw, 720);
+  }else{ // silhouette fallback for live preview without reel images
+    c.save();c.translate(half(side),150);c.fillStyle='rgba(40,38,34,.9)';
+    c.beginPath();c.ellipse(0,40,70,90,0,0,7);c.fill();
+    c.fillRect(-60,120,120,360);c.restore();
+  }
+}
+
+// ───────── the deterministic timeline ─────────
+const stage=$('stage');
+function seekTo(ms){
+  ms=clamp(ms,0,D);
+  // slam-in (panels rush together, slight overshoot, then settle) over 0..1050
+  const inL=seg(ms,0,1050,-1280,0,eOutBack), inR=seg(ms,0,1050,1280,0,eOutBack);
+  // micro screen-shake right at impact
+  const sk=ms>950&&ms<1180? (Math.sin(ms*0.9)* (1-(ms-950)/230) *6):0;
+  $('pL').style.transform='translateX('+(inL)+'px)';
+  $('pR').style.transform='translateX('+(inR)+'px)';
+  drawReel('L',ms); drawReel('R',ms);
+
+  // header + names slide/fade down
+  $('head').style.transform='translateX(-50%) translateY('+seg(ms,150,800,-40,0,eOutCubic)+'px)';
+  $('head').style.opacity=seg(ms,150,650,0,1,eOutCubic);
+  $('fL').style.opacity=seg(ms,500,1100,0,1,eOutCubic);
+  $('fR').style.opacity=seg(ms,650,1250,0,1,eOutCubic);
+  $('fL').style.transform='translateX('+seg(ms,500,1200,-30,0,eOutCubic)+'px)';
+  $('fR').style.transform='translateX('+seg(ms,650,1350,30,0,eOutCubic)+'px)';
+
+  // seam ignites at the slam
+  $('seam').style.opacity=seg(ms,950,1300,0,1,eOutCubic);
+  $('seam').style.transform='translateX(-50%) rotate(9.2deg) scaleX('+seg(ms,950,1250,3,1,eOutQuint)+')';
+  // a light sweep travels down the seam once, just after impact
+  const sw=seg(ms,1050,1700,-360,360,eOutCubic);
+  $('sweep').style.opacity=(ms>1050&&ms<1700)?0.9:0;
+  $('sweep').style.transform='translateX(-50%) rotate(9.2deg) translateY('+sw+'px)';
+
+  // blood splatter pops on impact
+  $('splat').style.opacity=seg(ms,1000,1250,0,.92,eOutCubic);
+
+  // VS badge punches in with overshoot
+  const vsc=seg(ms,950,1400,0,1,eOutBack);
+  $('vs').style.opacity=seg(ms,950,1150,0,1,eOutCubic);
+  $('vs').style.transform='scale('+vsc+') rotate('+seg(ms,950,1450,-16,0,eOutBack)+'deg)';
+
+  // stat bars fill + a soft number tick
+  document.querySelectorAll('.bar').forEach(b=>{b.querySelector('i').style.width=
+    (seg(ms,1150,1850,0,parseFloat(b.dataset.frac),eOutCubic)*100)+'%';});
+
+  // idle float on the badge during the hold
+  $('vs').style.marginTop=(-79+Math.sin(ms*0.0022)*4)+'px';
+
+  // ── outro: push-in + flash + shockwave, fade to black over the last 1300ms ──
+  const oT=D-1300;
+  const push=seg(ms,oT,D,1,1.14,eInCubic);
+  const fade=seg(ms,D-450,D,0,1,eInCubic);
+  stage.style.transform='scale('+push+')';
+  stage.style.filter=fade>0?('brightness('+(1-fade)+')'):'none';
+  $('flash').style.opacity=Math.max(seg(ms,oT,oT+120,0,.9,eOutCubic)-seg(ms,oT+120,oT+360,0,.9,eOutCubic),0);
+  const shp=seg(ms,oT,oT+600,0,1,eOutCubic);
+  $('shock').style.opacity=(ms>oT&&ms<oT+600)?(1-shp):0;
+  $('shock').style.transform='scale('+(1+shp*22)+')';
+}
+window.seekTo=seekTo;
+seekTo(0);
+
+// auto-play loop for LIVE PREVIEW (design site); the renderer sets window.CAPTURE=true and drives seekTo itself
+if(!window.CAPTURE){
+  window.sceneReady().then(()=>{
+    let t0=null;
+    function loop(ts){ if(t0==null)t0=ts; let e=(ts-t0)%(D+600); seekTo(Math.min(e,D)); requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>

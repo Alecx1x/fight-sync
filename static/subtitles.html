@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subtitle Editor — FightSync</title>
+<style>
+  :root{--bg:#0a0e16;--panel:#0e1626;--fg:#e7ecf5;--muted:#8a97ad;--line:#2c3a52;
+        --me:#FFE24D;--coach:#53D8FF;--ref:#FF5FC4}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,sans-serif}
+  header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:50;background:var(--bg)}
+  header h1{font-size:18px;margin:0}
+  a.back{color:var(--muted);text-decoration:none;font-size:14px}
+  .wrap{display:flex;gap:16px;padding:16px;flex-wrap:wrap}
+  .left{flex:1;min-width:320px}
+  .right{width:430px;max-width:100%}
+  .vidbox{position:relative;background:#000;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  video{width:100%;display:block;max-height:50vh}
+  #overlay{position:absolute;left:0;right:0;bottom:5%;text-align:center;pointer-events:none;
+    font-weight:700;font-size:22px;text-shadow:0 2px 3px #000,0 0 3px #000;padding:0 8%}
+  .tl{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .tl input[type=range]{flex:1}
+  button{background:#16223a;color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;cursor:pointer}
+  button.primary{background:#1e7a3a;border-color:#1e7a3a}
+  button.accent{background:#2c3a52}
+  button.on{background:#e81a1e;border-color:#e81a1e}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .hint{font-size:12px;color:var(--muted);line-height:1.5}
+  .lines{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;padding-right:4px}
+  .ln{display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;
+    background:var(--panel);border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:6px 8px}
+  .ln.act{outline:2px solid #3b6}
+  .ln .t{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;cursor:pointer;white-space:nowrap}
+  .ln input.txt{background:#0b1322;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px;width:100%;font-size:13px}
+  .ln select{background:#0b1322;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px;font-size:12px}
+  .ln .del{background:none;border:none;color:#c66;cursor:pointer;font-size:16px;padding:0 4px}
+  .legend{display:inline-flex;gap:4px;align-items:center;font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  #status{font-size:13px;color:var(--muted);min-height:18px}
+</style>
+</head>
+<body>
+<nav id="fsnav" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:7px 12px;background:#0b111c;border-bottom:1px solid #26324a;font:13px system-ui,'Segoe UI',Roboto,sans-serif;position:sticky;top:0;z-index:500">
+<a href="/" style="color:#e8eefc;text-decoration:none;font-weight:800;margin-right:8px">🥊 FightSync</a>
+<a href="/studio" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Form Studio</a>
+<a href="/label" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Labeler</a>
+<a href="/subtitles" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Captions</a>
+<a href="/cleanup" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Cleanup</a>
+<a href="/ninja" style="color:#c9a6ff;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🥷 Ninja Cam</a>
+<a href="/live" style="color:#ff7b7b;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🔴 Live</a>
+<script>document.querySelectorAll('#fsnav a').forEach(function(a){if(a.getAttribute('href')===location.pathname){a.style.background='#1b2740';a.style.color='#fff';}});</script>
+</nav>
+<header>
+  <h1>📝 Subtitle Editor</h1>
+  <div class="tabs" id="tabs"></div>
+  <span style="flex:1"></span>
+  <a class="back" href="/">← back to FightSync</a>
+</header>
+
+<div class="wrap">
+  <div class="left">
+    <div class="vidbox"><video id="vid" preload="auto"></video><div id="overlay"></div></div>
+    <div class="tl">
+      <button id="play">▶</button>
+      <input type="range" id="seek" min="0" max="100" step="0.01" value="0">
+      <span class="hint" id="tnow" style="white-space:nowrap">0.0s</span>
+    </div>
+    <canvas id="vox" height="26" title="Where you spoke. Blue = captioned, red = nothing captured — click a red bar to fill it in."
+            style="width:100%;height:26px;display:block;margin-top:6px;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:#0b1322"></canvas>
+    <div class="hint" id="voxMsg" style="margin-top:3px"></div>
+    <div class="bar">
+      <button id="auto" class="accent">✨ Auto-transcribe this round</button>
+      <button id="add" class="primary">＋ Add caption at playhead</button>
+      <label class="hint"><input type="checkbox" id="coach" checked> include coach voice</label>
+    </div>
+    <p class="hint">Drag the slider to a moment, then <b>＋ Add caption</b> (or click a caption's time to jump there). Auto-transcribe seeds captions and labels your voice (facecam) vs the in-game coach (gameplay) — fix any it gets wrong with the speaker dropdown.</p>
+    <div class="bar">
+      <span class="legend"><span class="dot" style="background:var(--me)"></span> You</span>
+      <span class="legend"><span class="dot" style="background:var(--coach)"></span> Coach</span>
+      <span class="legend"><span class="dot" style="background:var(--ref)"></span> Ref</span>
+      <span style="flex:1"></span>
+      <button id="save" class="primary">💾 Save</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="right">
+    <div class="lines" id="lines"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const COL={me:'#FFE24D',coach:'#53D8FF',ref:'#FF5FC4'};
+let rounds=[], subs=[], speech=[], ri=0, gs=0, dur=0;   // speech[r] = VAD regions of YOUR voice
+const vid=$('vid');
+
+async function init(){
+  const j=await (await fetch('/api/subtitles/rounds')).json();
+  rounds=j.rounds||[];
+  if(!rounds.length){ $('status').textContent='No synced session found — sync your clips first (the editor reads sessions/latest.json).'; return; }
+  subs=(j.subs&&j.subs.length===rounds.length)?j.subs:rounds.map(()=>[]);
+  speech=rounds.map(()=>[]);
+  buildTabs(); selectRound(0);
+}
+function buildTabs(){ const t=$('tabs'); t.innerHTML='';
+  rounds.forEach((r,i)=>{ const b=document.createElement('button'); b.textContent='Round '+(r.round||i+1);
+    b.onclick=()=>selectRound(i); b.id='tab'+i; t.appendChild(b); });
+}
+function selectRound(i){ saveLocal(); ri=i; gs=rounds[i].gs; dur=rounds[i].out_dur;
+  [...$('tabs').children].forEach((b,bi)=>b.classList.toggle('on',bi===i));
+  vid.src='/api/media?path='+encodeURIComponent(rounds[i].gameplay);
+  vid.onloadedmetadata=()=>{ seekTo(0); };
+  $('seek').max=dur; renderLines(); drawVox(); $('status').textContent='Round '+(rounds[i].round||i+1)+' · '+dur.toFixed(1)+'s';
+}
+
+// ── voice-activity strip: show where YOU spoke; flag bars with no caption as fill-in gaps ──
+function caps(){ return lines().filter(l=>l.speaker==='me'); }   // your captions cover your voice
+function gapRegions(){
+  return (speech[ri]||[]).filter(rg => !caps().some(l => !(l.end<=rg.start || l.start>=rg.end)));
+}
+function drawVox(){
+  const cv=$('vox'); const w=cv.clientWidth||cv.width; cv.width=w;
+  const ctx=cv.getContext('2d'), h=cv.height; ctx.clearRect(0,0,w,h);
+  if(!dur){ return; }
+  const X=t=>Math.max(0,Math.min(w, t/dur*w));
+  const regs=speech[ri]||[]; const gaps=gapRegions();
+  regs.forEach(rg=>{ const isGap=gaps.includes(rg);
+    ctx.fillStyle=isGap?'#e0483f':'#3a72c8'; ctx.fillRect(X(rg.start),3,Math.max(2,X(rg.end)-X(rg.start)),h-6); });
+  // playhead
+  const t=curTime(); ctx.fillStyle='#fff'; ctx.fillRect(X(t)-1,0,2,h);
+  const ng=gaps.length;
+  $('voxMsg').innerHTML = !regs.length
+    ? 'Tip: hit ✨ Auto-transcribe — it scans for every moment you spoke and marks anything it couldn\'t caption.'
+    : (ng ? '<b style="color:#e0483f">'+ng+' spot(s) where you spoke but nothing was captured</b> — click a red bar to fill it in.'
+          : '<span style="color:#6c9">✓ every moment you spoke has a caption.</span>');
+}
+$('vox').addEventListener('click',e=>{
+  if(!dur) return; const cv=$('vox'); const r=cv.getBoundingClientRect();
+  const t=(e.clientX-r.left)/r.width*dur;
+  const g=gapRegions().find(rg=>t>=rg.start-0.15 && t<=rg.end+0.15);
+  if(g){ lines().push({start:+g.start.toFixed(2), end:+g.end.toFixed(2), text:'', speaker:'me'});
+    renderLines(); drawVox(); seekTo(g.start);
+    const rows=[...$('lines').children]; const last=rows[rows.length-1];
+    [...$('lines').children].forEach(el=>{ if(Math.abs(+el.querySelector('.t').textContent.split('–')[0]-g.start)<0.1) el.querySelector('.txt').focus(); });
+  } else { seekTo(t); }   // not a gap → just scrub there
+});
+function curTime(){ return Math.max(0, Math.min(dur, vid.currentTime - gs)); }
+function seekTo(t){ vid.currentTime = gs + Math.max(0,Math.min(dur,t)); }
+$('seek').addEventListener('input',()=>seekTo(+$('seek').value));
+$('play').addEventListener('click',()=>{ if(vid.paused){vid.play();$('play').textContent='⏸';} else {vid.pause();$('play').textContent='▶';} });
+vid.addEventListener('timeupdate',()=>{ const t=curTime(); $('seek').value=t; $('tnow').textContent=t.toFixed(1)+'s';
+  if(vid.currentTime>gs+dur) vid.pause();
+  updateOverlay(t); highlight(t); drawVox(); });
+
+function lines(){ return subs[ri]; }
+function updateOverlay(t){ const ln=lines().find(l=>t>=l.start&&t<=l.end);
+  if(ln){ $('overlay').textContent=ln.text; $('overlay').style.color=COL[ln.speaker]||'#fff'; }
+  else $('overlay').textContent=''; }
+function highlight(t){ [...$('lines').children].forEach(el=>{ const i=+el.dataset.i;
+  el.classList.toggle('act', i>=0 && lines()[i] && t>=lines()[i].start && t<=lines()[i].end); }); }
+
+function renderLines(){ const box=$('lines'); box.innerHTML='';
+  lines().map((l,i)=>[l,i]).sort((a,b)=>a[0].start-b[0].start).forEach(([l,i])=>{
+    const row=document.createElement('div'); row.className='ln'; row.dataset.i=i;
+    row.style.borderLeftColor=COL[l.speaker]||'#888';
+    row.innerHTML=
+      '<span class="t" title="jump">'+l.start.toFixed(1)+'–'+l.end.toFixed(1)+'s</span>'+
+      '<select><option value="me">You</option><option value="coach">Coach</option><option value="ref">Ref</option></select>'+
+      '<input class="txt" value="">'+
+      '<button class="del">×</button>';
+    const sel=row.querySelector('select'); sel.value=l.speaker||'me';
+    sel.onchange=()=>{ l.speaker=sel.value; row.style.borderLeftColor=COL[l.speaker]; updateOverlay(curTime()); };
+    const txt=row.querySelector('input'); txt.value=l.text||''; txt.oninput=()=>{ l.text=txt.value; updateOverlay(curTime()); };
+    row.querySelector('.t').onclick=()=>seekTo(l.start);
+    row.querySelector('.del').onclick=()=>{ lines().splice(i,1); renderLines(); };
+    box.appendChild(row);
+  });
+  drawVox();
+}
+$('add').addEventListener('click',()=>{ const t=curTime();
+  lines().push({start:+t.toFixed(2), end:+Math.min(dur,t+2).toFixed(2), text:'', speaker:'me'});
+  renderLines();
+  // focus the new (last-by-start) row's text box
+  const rows=[...$('lines').children]; const last=rows.find(r=>+r.querySelector('.t').textContent.split('–')[0]===+t.toFixed(1));
+  (last||rows[rows.length-1]).querySelector('.txt').focus();
+});
+
+let pollT=null;
+$('auto').addEventListener('click',async()=>{
+  const r=rounds[ri]; $('auto').disabled=true; $('status').textContent='transcribing…';
+  const fd=new FormData(); fd.append('gameplay',r.gameplay); fd.append('facecam',r.facecam);
+  fd.append('gs',r.gs); fd.append('fs',r.fs); fd.append('out_dur',r.out_dur); fd.append('coach',$('coach').checked);
+  const {job}=await (await fetch('/api/subtitles/auto',{method:'POST',body:fd})).json();
+  clearInterval(pollT);
+  pollT=setInterval(async()=>{ const s=await (await fetch('/api/status/'+job)).json();
+    $('status').textContent=s.message||s.status;
+    if(s.status==='done'){ clearInterval(pollT); $('auto').disabled=false;
+      subs[ri]=(s.result&&s.result.lines)||[]; speech[ri]=(s.result&&s.result.speech_me)||[];
+      renderLines(); drawVox(); $('status').textContent='✓ '+subs[ri].length+' captions — red bars below = moments you spoke that need filling in.'; }
+    else if(s.status==='error'){ clearInterval(pollT); $('auto').disabled=false; $('status').textContent='error: '+s.message; }
+  }, 1000);
+});
+
+function saveLocal(){ /* subs mutated in place */ }
+$('save').addEventListener('click',async()=>{
+  const fd=new FormData(); fd.append('subs',JSON.stringify(subs)); fd.append('session','latest');
+  const j=await (await fetch('/api/subtitles/save',{method:'POST',body:fd})).json();
+  try{ await fetch('/api/session/touch',{method:'POST'}); }catch(e){}   // register as session progress
+  $('status').textContent='✓ saved '+j.rounds+' round(s) to your progress. Your next render will burn these captions.';
+});
+init();
+</script>
+</body>
+</html>

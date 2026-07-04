@@ -1,0 +1,201 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FightSync — Punch Labeler</title>
+<style>
+:root{--bg:#0a0e16;--card:#111827;--line:#26324a;--muted:#8aa0c0;--accent:#2c5cff;--good:#3ddc84}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#e8eefc;font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+select,input{background:#0e1827;color:#e8eefc;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:14px}
+button{background:#1b2740;color:#e8eefc;border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:14px}
+button:hover{border-color:var(--accent)}button.pri{background:var(--accent);border-color:var(--accent);font-weight:600}
+button.t{font-weight:700;min-width:96px}button.t b{display:block;font-size:11px;color:#cdd9f5;font-weight:500}
+video{width:100%;max-height:54vh;background:#000;border-radius:10px;display:block}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.small{font-size:12.5px;color:var(--muted)}
+.hand{padding:6px 12px;border-radius:8px;border:1px solid var(--line);cursor:pointer}
+.hand.on{background:var(--good);border-color:var(--good);color:#07210f;font-weight:700}
+#bar{position:relative;height:14px;background:#0e1827;border:1px solid var(--line);border-radius:7px;margin-top:8px;cursor:pointer}
+#bar i{position:absolute;top:0;bottom:0;width:2px;background:#fff}
+#bar .mk{position:absolute;top:1px;bottom:1px;width:3px;background:var(--good);border-radius:2px}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+td,th{text-align:left;padding:5px 8px;border-bottom:1px solid #1c2740;font-size:13.5px}
+td.t{color:var(--accent);font-weight:600;cursor:pointer}
+.x{color:#ff7b7b;cursor:pointer}
+kbd{background:#0e1827;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:11px}
+</style></head><body>
+<nav id="fsnav" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:7px 12px;background:#0b111c;border-bottom:1px solid #26324a;font:13px system-ui,'Segoe UI',Roboto,sans-serif;position:sticky;top:0;z-index:500">
+<a href="/" style="color:#e8eefc;text-decoration:none;font-weight:800;margin-right:8px">🥊 FightSync</a>
+<a href="/studio" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Form Studio</a>
+<a href="/label" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Labeler</a>
+<a href="/subtitles" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Captions</a>
+<a href="/cleanup" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Cleanup</a>
+<a href="/ninja" style="color:#c9a6ff;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🥷 Ninja Cam</a>
+<a href="/live" style="color:#ff7b7b;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🔴 Live</a>
+<script>document.querySelectorAll('#fsnav a').forEach(function(a){if(a.getAttribute('href')===location.pathname){a.style.background='#1b2740';a.style.color='#fff';}});</script>
+</nav>
+<div class="wrap">
+<h1>🥊 Punch Labeler</h1>
+<div class="sub">Tap every <b>real</b> punch as you watch — this becomes the ground truth I tune/train the detector against. Label the <b>tracked</b> clip so the times line up with the tracker.</div>
+
+<div class="card">
+  <div class="row">
+    <select id="roundSel"><option value="">— pick a tracked round —</option></select>
+    <button id="loadBtn">Load</button>
+    <span class="small" id="emptyMsg" style="display:none;color:#ffb454">No tracked rounds yet — <a href="/studio" style="color:#9db4ff">GPU-track a round in Form Studio</a>, and it appears here automatically.</span>
+    <a class="small" id="advToggle" href="#" style="margin-left:auto;color:var(--muted)">paste a path instead</a>
+  </div>
+  <div class="row" id="pathWrap" style="display:none;margin-top:8px">
+    <input id="pathIn" placeholder="C:\…\gpu_pose.mp4" style="flex:1;min-width:160px">
+    <button id="pathLoad">Load path</button>
+    <span class="small" id="srcMsg"></span>
+  </div>
+</div>
+
+<div class="card" id="stage" style="display:none">
+  <div id="trackBadge" style="margin-bottom:8px;font-weight:700;font-size:14px"></div>
+  <video id="vid" preload="auto" controls playsinline></video>
+  <div id="bar"><i></i></div>
+  <div class="row" style="margin-top:8px;justify-content:space-between">
+    <div class="row">
+      <button id="back1">◀ frame</button><button id="play">▶ play</button><button id="fwd1">frame ▶</button>
+      <span class="small" id="tlabel">0:00.00 / 0:00.00</span>
+    </div>
+    <div class="row">
+      <span class="small">speed</span>
+      <select id="speed"><option value="0.25">0.25×</option><option value="0.5" selected>0.5×</option><option value="1">1×</option></select>
+    </div>
+  </div>
+  <hr style="border:none;border-top:1px solid var(--line);margin:12px 0">
+  <div class="row" style="margin-bottom:8px">
+    <span class="small">hand:</span>
+    <span class="hand on" id="handL" data-h="L">Left</span>
+    <span class="hand" id="handR" data-h="R">Right</span>
+    <span class="small" style="margin-left:8px">(toggle <kbd>z</kbd> / <kbd>x</kbd>)</span>
+  </div>
+  <div class="row" style="margin-bottom:8px">
+    <span class="small">target:</span>
+    <span class="hand on" id="tgtHead" data-t="head">Head</span>
+    <span class="hand" id="tgtBody" data-t="body">Body</span>
+    <span class="small" style="margin-left:8px">(toggle <kbd>g</kbd> / <kbd>b</kbd>)</span>
+  </div>
+  <div class="row">
+    <button class="t" data-type="jab">Jab<b><kbd>j</kbd></b></button>
+    <button class="t" data-type="cross">Cross<b><kbd>c</kbd></b></button>
+    <button class="t" data-type="hook">Hook<b><kbd>h</kbd></b></button>
+    <button class="t" data-type="uppercut">Uppercut<b><kbd>u</kbd></b></button>
+  </div>
+  <div class="small" style="margin-top:8px"><kbd>space</kbd> play/pause · <kbd>←</kbd> <kbd>→</kbd> step frame · <kbd>z</kbd>/<kbd>x</kbd> hand · <kbd>g</kbd>/<kbd>b</kbd> head/body · then tap <kbd>j c h u</kbd> the moment the punch fires</div>
+</div>
+
+<div class="card" id="listCard" style="display:none">
+  <div class="row" style="justify-content:space-between">
+    <b id="count">0 punches labeled</b>
+    <div class="row"><button class="pri" id="saveBtn">💾 Save labels</button><span class="small" id="saveMsg"></span></div>
+  </div>
+  <table id="tbl"><tbody></tbody></table>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let clip="", marks=[], hand="L", target="head", fps=30, dur=0;
+const vid=$("vid");
+function fmt(s){s=Math.max(0,s||0);const m=Math.floor(s/60),x=(s%60);return m+":"+(x<10?"0":"")+x.toFixed(2);}
+
+function setBadge(state){ const el=$("trackBadge"); if(!el) return;
+  if(state==="tracked"){ el.textContent="✓ Tracked & aligned — ready to label"; el.style.color="var(--good)"; }
+  else if(state==="raw"){ el.textContent="⚠ Not tracked yet — this is the raw webcam, so your labels won't line up with the pose data. Track this round first, then load it."; el.style.color="#ffb454"; }
+  else { el.textContent=""; } }
+async function loadRounds(){
+  try{ const d=await(await fetch("/api/studio/rounds")).json(); const sel=$("roundSel"); const prog=d.progress||{};
+    const cur=sel.value;                                       // keep the current pick across auto-refreshes
+    sel.innerHTML='<option value="">— pick a tracked round —</option>';
+    let n=0;
+    (d.rounds||[]).forEach(r=>{ const saved=prog[String(r.round)]&&prog[String(r.round)].tracked;
+      if(!saved) return;                                       // ONLY show TRACKED rounds — everything listed is ready to label
+      n++;
+      const val=JSON.stringify({r:r.round, tracked:saved, fc:r.facecam||"", fs:r.fs||0, dur:r.out_dur||0});
+      sel.appendChild(new Option("Round "+r.round+"  ✓ tracked", val));
+      if(cur){ try{ if(JSON.parse(cur).r===r.round) sel.value=val; }catch(_){} } });
+    $("emptyMsg").style.display = n? "none":"";                // show the "go track a round" hint when the list is empty
+    sel.style.display = n? "":"none"; $("loadBtn").style.display = n? "":"none";
+  }catch(e){ $("emptyMsg").style.display=""; $("emptyMsg").textContent="(couldn't load rounds)"; }
+}
+function load(path, srcOverride){
+  if(!path) return; clip=path; $("stage").style.display=""; $("listCard").style.display="";
+  vid.src="/api/media?path="+encodeURIComponent(srcOverride||path); vid.load();   // labels keyed by `path`; preview may be a trimmed proxy
+  vid.onloadedmetadata=()=>{ dur=vid.duration; renderBar(); tick(); };
+  fetch("/api/labels?clip="+encodeURIComponent(path)).then(r=>r.json()).then(j=>{ marks=j.labels||[]; render(); });
+}
+$("loadBtn").onclick=()=>{ const v=$("roundSel").value; if(!v) return; const o=JSON.parse(v);
+  if(o.tracked){ load(o.tracked); setBadge("tracked"); } };   // only tracked rounds are listed, so this is always the ready file
+$("advToggle").onclick=(e)=>{ e.preventDefault(); const w=$("pathWrap"); w.style.display = w.style.display==="none"?"":"none"; };
+$("pathLoad").onclick=()=>{ const pth=$("pathIn").value.trim(); load(pth); setBadge(/gpu_pose\.mp4$/i.test(pth)?"tracked":"raw"); };
+
+// transport
+function togglePlay(){ if(vid.paused){vid.play();$("play").textContent="⏸ pause";} else {vid.pause();$("play").textContent="▶ play";} }
+$("play").onclick=togglePlay;
+$("back1").onclick=()=>{ vid.pause(); vid.currentTime=Math.max(0,vid.currentTime-1/fps); };
+$("fwd1").onclick=()=>{ vid.pause(); vid.currentTime=Math.min(dur,vid.currentTime+1/fps); };
+$("speed").onchange=()=>vid.playbackRate=parseFloat($("speed").value);
+vid.addEventListener("loadedmetadata",()=>vid.playbackRate=parseFloat($("speed").value));
+function tick(){ $("tlabel").textContent=fmt(vid.currentTime)+" / "+fmt(dur);
+  if(dur)$("bar").querySelector("i").style.left=(vid.currentTime/dur*100)+"%"; requestAnimationFrame(tick); }
+$("bar").onclick=e=>{ const r=$("bar").getBoundingClientRect(); vid.currentTime=(e.clientX-r.left)/r.width*dur; };
+
+// hand
+function setHand(h){ hand=h; $("handL").classList.toggle("on",h==="L"); $("handR").classList.toggle("on",h==="R"); }
+$("handL").onclick=()=>setHand("L"); $("handR").onclick=()=>setHand("R");
+function setTarget(t){ target=t; $("tgtHead").classList.toggle("on",t==="head"); $("tgtBody").classList.toggle("on",t==="body"); }
+$("tgtHead").onclick=()=>setTarget("head"); $("tgtBody").onclick=()=>setTarget("body");
+
+// marking
+function mark(type){ if(!clip) return; marks.push({t:+vid.currentTime.toFixed(2), type, hand, target});
+  marks.sort((a,b)=>a.t-b.t); render(); flash(type); }
+function flash(type){ const m=$("saveMsg"); m.textContent="＋ "+hand+" "+type+" to "+target+" @ "+fmt(vid.currentTime); m.style.color="var(--good)"; }
+document.querySelectorAll("button.t").forEach(b=>b.onclick=()=>mark(b.dataset.type));
+const KEYS={j:"jab",c:"cross",h:"hook",u:"uppercut"};
+// ALL hotkeys run in the CAPTURE phase so a mouse click on the video/controls can't steal them.
+//  Space = play/pause · ←/, = back a frame · →/. = forward a frame · z/x = hand · j c h u b = mark.
+document.addEventListener("keydown",e=>{
+  const ae=document.activeElement;
+  if(ae && /INPUT|SELECT|TEXTAREA/.test(ae.tagName)) return;   // let text fields + dropdowns work normally
+  const k=e.key.toLowerCase(), c=e.code; let hit=true;
+  if(c==="Space"||k===" ") togglePlay();
+  else if(c==="ArrowLeft"||k===",") $("back1").click();
+  else if(c==="ArrowRight"||k===".") $("fwd1").click();
+  else if(k==="z") setHand("L");
+  else if(k==="x") setHand("R");
+  else if(k==="g") setTarget("head");
+  else if(k==="b") setTarget("body");
+  else if(KEYS[k]) mark(KEYS[k]);
+  else hit=false;
+  if(hit){ e.preventDefault(); e.stopPropagation(); }
+},true);
+
+function render(){
+  $("count").textContent=marks.length+" punch"+(marks.length===1?"":"es")+" labeled";
+  const tb=$("tbl").querySelector("tbody"); tb.innerHTML="";
+  marks.forEach((m,i)=>{ const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="t" data-seek="${m.t}">${fmt(m.t)}</td>
+      <td><select data-i="${i}" class="ty">${["jab","cross","hook","uppercut"].map(t=>`<option ${t===m.type?"selected":""}>${t}</option>`).join("")}</select></td>
+      <td><select data-i="${i}" class="hd"><option ${m.hand==="L"?"selected":""}>L</option><option ${m.hand==="R"?"selected":""}>R</option></select></td>
+      <td><select data-i="${i}" class="tg"><option ${(m.target||"head")==="head"?"selected":""}>head</option><option ${m.target==="body"?"selected":""}>body</option></select></td>
+      <td class="x" data-del="${i}">✕</td>`;
+    tb.appendChild(tr); });
+  tb.querySelectorAll("[data-seek]").forEach(el=>el.onclick=()=>{vid.pause();vid.currentTime=+el.dataset.seek;});
+  tb.querySelectorAll(".ty").forEach(el=>el.onchange=()=>{marks[+el.dataset.i].type=el.value;});
+  tb.querySelectorAll(".hd").forEach(el=>el.onchange=()=>{marks[+el.dataset.i].hand=el.value;});
+  tb.querySelectorAll(".tg").forEach(el=>el.onchange=()=>{marks[+el.dataset.i].target=el.value;});
+  tb.querySelectorAll("[data-del]").forEach(el=>el.onclick=()=>{marks.splice(+el.dataset.del,1);render();});
+  renderBar();
+}
+function renderBar(){ const b=$("bar"); b.querySelectorAll(".mk").forEach(e=>e.remove());
+  if(!dur)return; marks.forEach(m=>{ const d=document.createElement("div"); d.className="mk"; d.style.left=(m.t/dur*100)+"%"; b.appendChild(d); }); }
+
+$("saveBtn").onclick=async()=>{ if(!clip)return; const fd=new FormData(); fd.append("clip",clip); fd.append("labels_json",JSON.stringify(marks));
+  const j=await(await fetch("/api/labels/save",{method:"POST",body:fd})).json();
+  const m=$("saveMsg"); m.style.color="var(--muted)"; m.textContent= j.ok?("✓ saved "+j.count+" labels"):"⚠ save failed"; };
+
+loadRounds(); setInterval(loadRounds, 6000);   // auto-recognize a round the moment it finishes tracking — no reload needed
+</script></div></body></html>

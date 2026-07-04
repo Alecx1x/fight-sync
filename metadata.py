@@ -101,6 +101,10 @@ def build(cfg, result: dict, chapters_raw: list[tuple[float, str]],
     hashtags = "#ThrillOfTheFight2 #VRBoxing #Boxing #Quest3 #VRFitness"
 
     parts = [title, ""]
+    credit = (getattr(cfg, "spectator_credit", "") or "").strip()
+    if credit:                                   # source-credit (VOD + channel) goes at the very top
+        parts.append(credit)
+        parts.append("")
     if transcript:
         # a light, honest one-liner — no AI claims, just framing
         parts.append("Round-by-round VR boxing in Thrill of the Fight 2, "

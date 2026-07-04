@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>FightSync · Live</title>
+<style>
+  :root{--bg:#0b0e13;--panel:#141a23;--line:#26303f;--ink:#e7ecf3;--muted:#8b97a8;
+    --accent:#e23b3b;--green:#3ddc84;--blue:#5aa7ff;--r:12px}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+  header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;background:var(--bg)}
+  header .logo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+    background:linear-gradient(145deg,var(--accent),#8c1f1f)}
+  header h1{font-size:16px;margin:0;flex:1}
+  header a{color:var(--muted);text-decoration:none;font-size:13px}
+  .wrap{max-width:780px;margin:0 auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 12px}
+  button{cursor:pointer;border:0;border-radius:9px;font-weight:600}
+  .btn{background:#22303f;border:1px solid var(--line);color:var(--ink);padding:9px 14px}
+  .btn:hover{background:#2a3a4d}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  label.fld{display:block;margin:10px 0}
+  label.fld span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  input[type=text],input[type=password]{width:100%;background:#0d131b;border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:9px 11px;font-family:inherit}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--line);background:#0d131b}
+  .dot{width:9px;height:9px;border-radius:50%;background:#5a6678}
+  .dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
+  .dot.live{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  .scenes{display:flex;flex-wrap:wrap;gap:8px}
+  .scenes button{background:#0d131b;border:1px solid var(--line);color:var(--ink);padding:8px 12px;font-size:13px}
+  .scenes button.cur{border-color:var(--green);color:var(--green)}
+  .golive{background:linear-gradient(145deg,var(--accent),#b32a2a);color:#fff;padding:14px;width:100%;font-size:16px}
+  .golive.stop{background:#22303f;border:1px solid var(--line)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{background:#0d131b;color:var(--muted);padding:8px 16px;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--accent);color:#fff}
+  .msg{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px}
+  .hint{font-size:12.5px;color:var(--muted)}
+  details summary{cursor:pointer;font-weight:600;color:var(--ink)}
+  ol{margin:10px 0 0;padding-left:20px;font-size:13px;color:var(--muted)}
+  ol li{margin:5px 0}
+  code{background:#0d131b;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+  .phase{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+</style>
+</head>
+<body>
+<nav id="fsnav" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:7px 12px;background:#0b111c;border-bottom:1px solid #26324a;font:13px system-ui,'Segoe UI',Roboto,sans-serif;position:sticky;top:0;z-index:500">
+<a href="/" style="color:#e8eefc;text-decoration:none;font-weight:800;margin-right:8px">🥊 FightSync</a>
+<a href="/studio" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Form Studio</a>
+<a href="/label" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Labeler</a>
+<a href="/subtitles" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Captions</a>
+<a href="/cleanup" style="color:#8aa0c0;text-decoration:none;padding:4px 9px;border-radius:7px">Cleanup</a>
+<a href="/ninja" style="color:#c9a6ff;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🥷 Ninja Cam</a>
+<a href="/live" style="color:#ff7b7b;text-decoration:none;padding:4px 9px;border-radius:7px;font-weight:600">🔴 Live</a>
+<script>document.querySelectorAll('#fsnav a').forEach(function(a){if(a.getAttribute('href')===location.pathname){a.style.background='#1b2740';a.style.color='#fff';}});</script>
+</nav>
+<header>
+  <div class="logo">🥊</div>
+  <h1>Live <span class="phase">OBS · tracking · auto-rounds · simulcast</span></h1>
+  <a href="/">← back to FightSync</a>
+</header>
+
+<div class="wrap">
+  <!-- STATUS -->
+  <div class="card">
+    <h2>OBS connection</h2>
+    <div class="row">
+      <span class="pill"><span class="dot" id="obsDot"></span><span id="obsState">checking…</span></span>
+      <span class="pill"><span class="dot" id="liveDot"></span><span id="liveState">offline</span></span>
+      <button class="btn" id="refreshBtn" style="margin-left:auto">↻ Refresh</button>
+    </div>
+    <div class="msg" id="statusMsg"></div>
+  </div>
+
+  <!-- SETUP (collapsible) -->
+  <div class="card">
+    <details id="setup">
+      <summary>First-time setup — turn on OBS's WebSocket server</summary>
+      <ol>
+        <li>OBS is already installed on this PC. Open it.</li>
+        <li>In OBS: <b>Tools → WebSocket Server Settings</b> → tick <b>Enable WebSocket server</b> (port <code>4455</code>). Set a password and copy it.</li>
+        <li>Paste that password below and <b>Save settings</b>.</li>
+        <li>Build two OBS scenes: one with your <b>Quest cast + webcam</b> (the live look), and later a <b>between-rounds</b> scene.</li>
+        <li>Add FightSync's overlay: <b>+ → Browser → URL</b> <code id="ovUrl">…/overlay</code> (transparent skeleton + HUD; fleshed out in Phase 1–3).</li>
+      </ol>
+    </details>
+  </div>
+
+  <!-- MULTI-CAMERA SETUP (collapsible) -->
+  <div class="card">
+    <details>
+      <summary>📹 Add cameras — phone &amp; more, wireless via NDI</summary>
+      <div class="hint" style="margin-top:10px">Each camera becomes an OBS <b>source</b>; make a <b>scene per angle</b> and the auto-director below rotates between them.</div>
+      <ol>
+        <li><b>iPhone:</b> install <b>NDI HX Camera</b> (App Store, ~$20) and open it — it broadcasts your phone's camera over Wi-Fi. (Apple's built-in <i>Continuity Camera</i> is Mac-only, so on Windows you use an app.)</li>
+        <li><b>OBS:</b> install the <b>NDI plugin (DistroAV)</b>, restart OBS, then <b>+ → NDI Source</b> → pick your phone.</li>
+        <li>Make an OBS <b>scene per angle</b> — e.g. <code>Cam: Front</code>, <code>Cam: Side</code>, <code>Cam: Phone</code>, <code>Gameplay</code>.</li>
+        <li><b>More cameras later:</b> more phones = more NDI HX Camera; a real camera = an HDMI→USB capture card (Elgato Cam Link) or an HDMI→NDI encoder. All appear as OBS sources.</li>
+      </ol>
+      <div class="hint" style="margin-top:6px">Tips: <b>5 GHz Wi-Fi</b>, PC on <b>Ethernet</b>, phones <b>plugged in</b>. Simpler single-phone alternatives: <b>Camo</b> or <b>EpocCam</b>.</div>
+    </details>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="card">
+    <h2>Stream settings</h2>
+    <div class="row" style="margin-bottom:6px">
+      <span class="hint">Go live on:</span>
+      <div class="seg" id="platSeg">
+        <button data-p="twitch" class="on">Twitch</button>
+        <button data-p="youtube">YouTube</button>
+      </div>
+    </div>
+    <label class="hint" style="display:block;margin-bottom:4px"><input type="checkbox" id="simulcast"> ⫶ <b>Simulcast</b> Twitch + YouTube together <span id="simHint" style="opacity:.7"></span></label>
+    <label class="fld"><span>Twitch stream key <a class="hint" href="https://dashboard.twitch.tv/settings/stream" target="_blank">(dashboard ↗)</a></span>
+      <input type="password" id="twKey" placeholder="live_xxxxxxxx — saved, never shown back"></label>
+    <label class="fld"><span>YouTube stream key <a class="hint" href="https://studio.youtube.com" target="_blank">(YouTube Studio → Go Live → Stream ↗)</a></span>
+      <input type="password" id="ytKey" placeholder="xxxx-xxxx-xxxx-xxxx — saved, never shown back"></label>
+    <label class="fld"><span>OBS WebSocket password (from the setup step)</span>
+      <input type="password" id="obsPw" placeholder="from OBS → Tools → WebSocket Server Settings"></label>
+    <button class="btn" id="saveBtn">💾 Save settings</button>
+    <span class="msg" id="saveMsg"></span>
+  </div>
+
+  <!-- SCENES -->
+  <div class="card">
+    <h2>Scenes</h2>
+    <div class="scenes" id="scenes"><span class="hint">connect OBS to list scenes…</span></div>
+  </div>
+
+  <!-- LIVE TRACKING (Phase 2) -->
+  <div class="card">
+    <h2>Live body tracking <span class="phase">Phase 2</span></h2>
+    <div class="hint" style="margin-bottom:10px">Runs YOLO11-pose on the OBS <b>Virtual Camera</b> and draws your skeleton + live punch/guard stats on the overlay, in real time. In OBS click <b>Start Virtual Camera</b> first, then Start tracking here.</div>
+    <div class="row">
+      <label class="hint">cam # <input type="text" id="vcamSrc" placeholder="0" style="width:54px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px"></label>
+      <label class="hint">model
+        <select id="trkModel" style="background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px">
+          <option value="yolo11n-pose.pt">fast (live)</option>
+          <option value="yolo11m-pose.pt">balanced</option>
+        </select></label>
+      <button class="btn" id="trkBtn" style="margin-left:auto">▶ Start tracking</button>
+    </div>
+    <div class="msg" id="trkMsg"></div>
+  </div>
+
+  <!-- AUTO ROUND GRAPHICS (Phase 3) -->
+  <div class="card">
+    <h2>Auto round graphics <span class="phase">Phase 3</span></h2>
+    <div class="hint" style="margin-bottom:10px">Hands-off: FightSync runs the round clock, auto-plays the between-round card, and switches OBS scenes on its own. Hit <b>Start match</b> at the opening bell.</div>
+    <div class="row">
+      <label class="hint">rounds <input id="mRounds" type="number" value="3" min="1" style="width:46px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px"></label>
+      <label class="hint">round <input id="mRoundLen" type="number" value="180" style="width:58px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px">s</label>
+      <label class="hint">rest <input id="mRestLen" type="number" value="60" style="width:52px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px">s</label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">live scene <input id="mLiveScene" type="text" placeholder="(optional)" style="width:118px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px"></label>
+      <label class="hint">between <input id="mBetweenScene" type="text" placeholder="(optional)" style="width:118px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px"></label>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="golive" id="matchBtn" style="flex:1">▶ Start match</button>
+      <button class="btn" id="matchNext" title="skip to the next round now">⏭ Next</button>
+      <button class="btn" id="matchPause" title="pause / resume the clock">⏸</button>
+    </div>
+    <div class="msg" id="matchMsg"></div>
+  </div>
+
+  <!-- LIVE AUTO-DIRECTOR (multi-cam) -->
+  <div class="card">
+    <h2>Live auto-director <span class="phase">multi-cam</span></h2>
+    <div class="hint" style="margin-bottom:10px">Auto-switches between your camera <b>scenes</b> on its own — a live version of your multicam director. Tick the scenes to rotate; set how long to hold each.</div>
+    <div class="scenes" id="dirScenes"><span class="hint">connect OBS to pick camera scenes…</span></div>
+    <div class="row" style="margin-top:10px">
+      <label class="hint">hold each <input id="dirInterval" type="number" value="10" min="2" style="width:48px;background:#0d131b;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:6px 8px">s</label>
+      <button class="golive" id="dirBtn" style="flex:1">▶ Start auto-director</button>
+      <button class="btn" id="dirCut" title="cut to the next angle now">⏭ Cut</button>
+    </div>
+    <div class="msg" id="dirMsg"></div>
+  </div>
+
+  <!-- GO LIVE -->
+  <div class="card">
+    <h2>Broadcast</h2>
+    <button class="golive" id="goBtn">● Go Live</button>
+    <div class="msg" id="goMsg"></div>
+    <div class="hint" style="margin-top:8px">Tick <b>Simulcast</b> above to go live on Twitch <b>and</b> YouTube at once (FightSync runs a local relay that fans your OBS stream out to both — no re-encode). Leave it unticked to stream to the single selected platform. Set OBS's encoder to settings both accept (≈1080p, 6000 kbps, 2s keyframe).</div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let streaming=false;
+let dirSelected=new Set(), dirSeed=false;
+$("ovUrl").textContent = location.origin + "/overlay";
+
+async function refresh(){
+  let s;
+  try{ s=await(await fetch("/api/live/status")).json(); }
+  catch(e){ $("statusMsg").textContent="(couldn't reach FightSync)"; return; }
+  // OBS connection
+  $("obsDot").className="dot"+(s.connected?" ok":"");
+  $("obsState").textContent = s.connected ? ("OBS "+(s.obs_version||"")+" connected") : "OBS not connected";
+  $("statusMsg").textContent = s.connected ? "" : (s.error||"");
+  // streaming
+  streaming = !!s.streaming;
+  const relaying = s.relay && s.relay.running;
+  $("liveDot").className="dot"+(streaming?" live":"");
+  $("liveState").textContent = streaming
+    ? (relaying ? ("LIVE · simulcast ("+(s.relay.platforms||[]).join(" + ")+")") : "LIVE")
+    : "offline";
+  $("goBtn").textContent = streaming ? "■ Stop stream" : "● Go Live";
+  $("goBtn").classList.toggle("stop", streaming);
+  // simulcast availability (needs both keys saved)
+  const sim=$("simulcast");
+  if(s.can_simulcast===false){ sim.checked=false; sim.disabled=true; $("simHint").textContent="(save both keys to enable)"; }
+  else { sim.disabled=false; $("simHint").textContent=""; }
+  $("platSeg").style.opacity = sim.checked ? .4 : 1;
+  // platform + saved-key indicators
+  if(s.platform) selectPlat(s.platform);
+  if(s.keys){ $("twKey").placeholder = s.keys.twitch ? "✓ saved — leave blank to keep" : "live_xxxxxxxx";
+    $("ytKey").placeholder = s.keys.youtube ? "✓ saved — leave blank to keep" : "xxxx-xxxx-xxxx-xxxx"; }
+  if(s.has_obs_pw) $("obsPw").placeholder="✓ saved — leave blank to keep";
+  // scenes
+  const sc=$("scenes");
+  if(s.connected && s.scenes && s.scenes.length){
+    sc.innerHTML="";
+    s.scenes.forEach(n=>{ const b=document.createElement("button");
+      b.textContent=n; if(n===s.current_scene) b.className="cur";
+      b.onclick=async()=>{ await fetch("/api/live/scene",{method:"POST",body:new URLSearchParams({name:n})}); refresh(); };
+      sc.appendChild(b); });
+  } else if(s.connected){ sc.innerHTML='<span class="hint">no scenes in OBS yet — add one</span>'; }
+  else { sc.innerHTML='<span class="hint">connect OBS to list scenes…</span>'; }
+  // auto-director camera-scene multi-select (rebuild only when the scene list changes)
+  const ds=$("dirScenes");
+  if(s.connected && s.scenes && s.scenes.length){
+    const sig=s.scenes.join("|");
+    if(ds.dataset.sig!==sig){ ds.dataset.sig=sig; ds.innerHTML="";
+      s.scenes.forEach(n=>{ const b=document.createElement("button");
+        b.textContent=n; if(dirSelected.has(n)) b.className="cur";
+        b.onclick=()=>{ if(dirSelected.has(n)) dirSelected.delete(n); else dirSelected.add(n); b.classList.toggle("cur"); };
+        ds.appendChild(b); }); }
+  } else if(!s.connected){ ds.dataset.sig=""; ds.innerHTML='<span class="hint">connect OBS to pick camera scenes…</span>'; }
+}
+let plat="twitch";
+function selectPlat(p){ plat=p; $("platSeg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.p===p)); }
+$("platSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>selectPlat(b.dataset.p));
+$("simulcast").onchange=()=>{ $("platSeg").style.opacity = $("simulcast").checked ? .4 : 1; };
+$("refreshBtn").onclick=refresh;
+$("saveBtn").onclick=async()=>{
+  const body=new URLSearchParams({platform:plat});
+  if($("twKey").value) body.set("twitch",$("twKey").value);
+  if($("ytKey").value) body.set("youtube",$("ytKey").value);
+  if($("obsPw").value) body.set("obs_password",$("obsPw").value);
+  await fetch("/api/live/keys",{method:"POST",body});
+  $("twKey").value=$("ytKey").value=$("obsPw").value="";
+  $("saveMsg").textContent="✓ saved"; setTimeout(()=>$("saveMsg").textContent="",2000); refresh();
+};
+$("goBtn").onclick=async()=>{
+  $("goBtn").disabled=true; $("goMsg").textContent = streaming ? "Stopping…" : "Going live…";
+  const sim = $("simulcast").checked ? 1 : 0;
+  const body = streaming ? undefined : new URLSearchParams({simulcast:sim});
+  const r=await fetch(streaming?"/api/live/stop":"/api/live/go",{method:"POST",body});
+  $("goBtn").disabled=false;
+  if(!r.ok){ $("goMsg").textContent="⚠ "+(await r.text()).replace(/[{}"]/g,"").slice(0,180); }
+  else { const j=await r.json();
+    $("goMsg").textContent = streaming ? "Stopped." :
+      (j.platform==="simulcast" ? ("🔴 LIVE · simulcast to "+(j.platforms||[]).join(" + ")+"!") : ("🔴 LIVE on "+(j.platform||plat)+"!")); }
+  refresh();
+};
+// live tracking control
+let tracking=false;
+async function trkRefresh(){
+  try{ const s=await(await fetch("/api/live/track/status")).json();
+    tracking=s.running; $("trkBtn").textContent=tracking?"■ Stop tracking":"▶ Start tracking";
+    $("trkBtn").classList.toggle("on",tracking);
+    if(tracking) $("trkMsg").textContent="🟢 tracking live · "+s.punches+" punches · guard "+(s.guard||"—");
+  }catch(e){}
+}
+$("trkBtn").onclick=async()=>{
+  if(tracking){ await fetch("/api/live/track/stop",{method:"POST"}); $("trkMsg").textContent="stopped"; }
+  else { const body=new URLSearchParams({source:$("vcamSrc").value||"",model:$("trkModel").value});
+    await fetch("/api/live/track/start",{method:"POST",body});
+    $("trkMsg").textContent="starting… (first run warms the model — a few seconds)"; }
+  setTimeout(trkRefresh,1000);
+};
+// match automation control
+let match={running:false,paused:false};
+async function matchRefresh(){
+  try{ const s=await(await fetch("/api/live/match/status")).json(); match=s;
+    $("matchBtn").textContent = s.running ? "■ Stop match" : "▶ Start match";
+    $("matchPause").textContent = s.paused ? "▶" : "⏸";
+    if(s.running){ const ph = s.phase==="rest" ? "REST" : ("ROUND "+s.round+"/"+s.rounds);
+      $("matchMsg").textContent="🟢 "+ph+(s.paused?" (paused)":"")+" · "+(s.clock||""); }
+    else if(s.phase==="done") $("matchMsg").textContent="✓ match complete";
+    if(s.saved && !$("mRounds").dataset.set){ const c=s.saved;   // restore last config once
+      if(c.rounds)$("mRounds").value=c.rounds; if(c.round_len)$("mRoundLen").value=c.round_len;
+      if(c.rest_len!=null)$("mRestLen").value=c.rest_len;
+      if(c.live_scene)$("mLiveScene").value=c.live_scene; if(c.between_scene)$("mBetweenScene").value=c.between_scene;
+      $("mRounds").dataset.set="1"; }
+  }catch(e){}
+}
+$("matchBtn").onclick=async()=>{
+  if(match.running){ await fetch("/api/live/match/stop",{method:"POST"}); }
+  else { const body=new URLSearchParams({rounds:$("mRounds").value,round_len:$("mRoundLen").value,
+    rest_len:$("mRestLen").value,live_scene:$("mLiveScene").value,between_scene:$("mBetweenScene").value});
+    await fetch("/api/live/match/start",{method:"POST",body}); }
+  setTimeout(matchRefresh,400);
+};
+$("matchNext").onclick=()=>{ fetch("/api/live/match/next",{method:"POST"}); };
+$("matchPause").onclick=async()=>{ await fetch("/api/live/match/pause",{method:"POST"}); setTimeout(matchRefresh,300); };
+
+// live auto-director control
+async function dirRefresh(){
+  try{ const s=await(await fetch("/api/live/director/status")).json();
+    $("dirBtn").textContent = s.running ? "■ Stop auto-director" : "▶ Start auto-director";
+    $("dirBtn").classList.toggle("stop", s.running);
+    if(s.running) $("dirMsg").textContent="🎬 on air: "+(s.current||"…");
+    if(!dirSeed && s.saved){ if(s.saved.interval)$("dirInterval").value=s.saved.interval;
+      (s.saved.scenes||[]).forEach(n=>dirSelected.add(n)); dirSeed=true; }
+  }catch(e){}
+}
+$("dirBtn").onclick=async()=>{
+  const st=await(await fetch("/api/live/director/status")).json();
+  if(st.running){ await fetch("/api/live/director/stop",{method:"POST"}); $("dirMsg").textContent="stopped"; }
+  else { const scenes=[...dirSelected]; if(!scenes.length){ $("dirMsg").textContent="tick at least one camera scene above"; return; }
+    const r=await fetch("/api/live/director/start",{method:"POST",body:new URLSearchParams({scenes:scenes.join("|"),interval:$("dirInterval").value})});
+    if(!r.ok){ $("dirMsg").textContent="⚠ "+(await r.text()).replace(/[{}"]/g,"").slice(0,150); return; }
+    $("dirMsg").textContent="🎬 rotating "+scenes.length+" angle(s)"; }
+  setTimeout(dirRefresh,400);
+};
+$("dirCut").onclick=()=>{ fetch("/api/live/director/cut",{method:"POST"}); };
+
+refresh(); setInterval(refresh, 4000);
+trkRefresh(); setInterval(trkRefresh, 2500);
+matchRefresh(); setInterval(matchRefresh, 1500);
+dirRefresh(); setInterval(dirRefresh, 2000);
+</script>
+</body>
+</html>

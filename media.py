@@ -74,7 +74,7 @@ def probe(path: str) -> MediaInfo:
     out = subprocess.run(
         [FFPROBE, "-v", "error", "-print_format", "json",
          "-show_format", "-show_streams", path],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, check=True, timeout=60,
     ).stdout
     data = json.loads(out)
 
@@ -114,7 +114,7 @@ def _measure_duration(path: str, fps: float) -> float:
             [FFPROBE, "-v", "error", "-select_streams", "v:0",
              "-count_packets", "-show_entries", "stream=nb_read_packets",
              "-of", "json", path],
-            capture_output=True, text=True, check=True,
+            capture_output=True, text=True, check=True, timeout=180,
         ).stdout
         pkts = int(json.loads(out)["streams"][0]["nb_read_packets"])
         if fps > 0 and pkts > 0:
@@ -122,6 +122,51 @@ def _measure_duration(path: str, fps: float) -> float:
     except Exception:
         pass
     return 0.0
+
+
+def waveform_peaks(path: str, max_points: int = 6000) -> dict:
+    """Decode the audio to low-rate mono PCM and return per-bucket amplitude
+    peaks (0..1, peak-normalised so a quiet facecam mic is still visible) plus
+    the duration. Used by the visual sync aligner: a shared clap/punch shows as
+    a spike on BOTH clips even when their mics are too different to cross-correlate.
+
+    Returns {"duration": float, "peaks": [float...], "n": int}. `peaks` is empty
+    if the file has no audio.
+    """
+    import numpy as np
+
+    info = probe(path)
+    dur = max(info.duration, 0.0)
+    if not info.has_audio or dur <= 0:
+        return {"duration": round(dur, 3), "peaks": [], "n": 0}
+
+    # Keep the decoded buffer bounded (~<=4M samples) regardless of clip length.
+    sr = 1600
+    if sr * dur > 4_000_000:
+        sr = max(400, int(4_000_000 / dur))
+
+    raw = subprocess.run(
+        [FFMPEG, "-v", "error", "-i", path,
+         "-map", "a:0", "-ac", "1", "-ar", str(sr),
+         "-f", "s16le", "-"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True,
+    ).stdout
+    samples = np.frombuffer(raw, dtype="<i2")
+    if samples.size == 0:
+        return {"duration": round(dur, 3), "peaks": [], "n": 0}
+
+    # ~40 buckets/sec for clean transient localisation, capped at max_points.
+    n = int(min(max_points, max(200, dur * 40)))
+    n = min(n, samples.size)
+    # Pad so the samples split evenly into n buckets, then take per-bucket max-abs.
+    pad = (-samples.size) % n
+    if pad:
+        samples = np.concatenate([samples, np.zeros(pad, dtype="<i2")])
+    peaks = np.abs(samples.reshape(n, -1).astype(np.float32)).max(axis=1)
+    top = float(peaks.max()) or 1.0
+    peaks = (peaks / top)
+    return {"duration": round(dur, 3),
+            "peaks": [round(float(p), 3) for p in peaks], "n": n}
 
 
 def run_ffmpeg(args: list[str], cwd: Optional[str] = None,
